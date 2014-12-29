@@ -1,0 +1,307 @@
+
+R用的原始处理数据：
+multiple_deeplearning_extend
+multiple_deeplearning
+
+mutiple_extend_set是新的纯用来预测的数据集
+multiple_dl_1_extend是结果
+test_PL用来进行threshold的优化
+
+python执行：
+对于普通的DP算法，用的是train集合，valid用来自行停止，再用一遍valid用来做test set
+test集合是运行的时候会进行的extend集合，不是读取weights另外进行预测的那种，结果是result_on_valid
+
+
+后期
+需要用python跑出来的result_on_valid结果和test_PL来对threshold作优化
+然后把新的threshold放在新的_extend结果上
+
+
+
+
+
+PL_800:
+
+Cluster 1 : 
+ Number 18.81683 %
+ P&L -1142.709 
+ WinningRate 0.6674553 
+ SharpRatio -0.1541263 
+ TotalTrades 3129.878 
+ P&L Contribution 18.26547 % 
+
+Cluster 2 : 
+ Number 18.57118 %
+ P&L -1297.379 
+ WinningRate 0.3953793 
+ SharpRatio -0.09113226 
+ TotalTrades 3119.421 
+ P&L Contribution 20.46703 % 
+
+Cluster 3 : 
+ Number 22.46733 %
+ P&L -1645.582 
+ WinningRate 0.4825381 
+ SharpRatio 0.1207902 
+ TotalTrades 2613.344 
+ P&L Contribution 31.40651 % 
+
+Cluster 4 : 
+ Number 18.65848 %
+ P&L -736.9323 
+ WinningRate 0.7386392 
+ SharpRatio 0.08236808 
+ TotalTrades 3239.233 
+ P&L Contribution 11.68027 % 
+
+Cluster 5 : 
+ Number 0.1575499 %
+ P&L -81609.6 
+ WinningRate 0.506885 
+ SharpRatio 0.0258633 
+ TotalTrades 3686.732 
+ P&L Contribution 10.92215 % 
+
+Cluster 6 : 
+ Number 9.159192 %
+ P&L -932.9215 
+ WinningRate 0.6163245 
+ SharpRatio 0.00534382 
+ TotalTrades 16130.12 
+ P&L Contribution 7.258569 % 
+
+
+
+Multiple 1 : 39.2992 %
+Multiple 2 : 39.60315 %
+Multiple 3 : 35.09822 %
+Multiple 4 : 39.48002 %
+Multiple 5 : 98.73848 %
+Multiple 6 : 57.05672 %
+
+PL_1200:
+Cluster 1 : 
+ Number 8.425943 %
+ P&L -3756.199 
+ WinningRate 0.5270326 
+ SharpRatio 0.2566001 
+ TotalTrades 4348.982 
+ P&L Contribution 27.57238 % 
+
+Cluster 2 : 
+ Number 0.1568885 %
+ P&L -81445.24 
+ WinningRate 0.5061804 
+ SharpRatio 0.02179398 
+ TotalTrades 3673.025 
+ P&L Contribution 11.13176 % 
+
+Cluster 3 : 
+ Number 29.98237 %
+ P&L -883.6852 
+ WinningRate 0.4222325 
+ SharpRatio -0.006552953 
+ TotalTrades 2583.827 
+ P&L Contribution 23.08185 % 
+
+Cluster 4 : 
+ Number 14.17658 %
+ P&L -1606.581 
+ WinningRate 0.6229144 
+ SharpRatio -0.2214624 
+ TotalTrades 3318.717 
+ P&L Contribution 19.84181 % 
+
+Cluster 5 : 
+ Number 28.44404 %
+ P&L -503.0701 
+ WinningRate 0.7143237 
+ SharpRatio 0.03242724 
+ TotalTrades 2958.972 
+ P&L Contribution 12.46599 % 
+
+Cluster 6 : 
+ Number 9.624036 %
+ P&L -704.4401 
+ WinningRate 0.6271807 
+ SharpRatio -0.01711882 
+ TotalTrades 15999.03 
+ P&L Contribution 5.906205 % 
+
+Multiple 1 : 52.16851 %
+Multiple 2 : 98.33315 %
+Multiple 3 : 23.4511 %
+Multiple 4 : 39.3399 %
+Multiple 5 : 24.43741 %
+Multiple 6 : 48.78245 %
+
+
+PL_1000:
+Cluster 1 : 
+ Number 11.65565 %
+ P&L -2303.976 
+ WinningRate 0.6187114 
+ SharpRatio 0.2227278 
+ TotalTrades 3550.824 
+ P&L Contribution 23.10286 % 
+
+Cluster 2 : 
+ Number 30.50568 %
+ P&L -956.4109 
+ WinningRate 0.4266599 
+ SharpRatio 0.01774394 
+ TotalTrades 2652.513 
+ P&L Contribution 25.10016 % 
+
+Cluster 3 : 
+ Number 25.17002 %
+ P&L -511.7926 
+ WinningRate 0.7277709 
+ SharpRatio -0.02204898 
+ TotalTrades 2977.338 
+ P&L Contribution 11.08227 % 
+
+Cluster 4 : 
+ Number 9.177711 %
+ P&L -771.7526 
+ WinningRate 0.6198781 
+ SharpRatio -0.0009466178 
+ TotalTrades 16206.92 
+ P&L Contribution 6.093458 % 
+
+Cluster 5 : 
+ Number 0.1870492 %
+ P&L -75745.61 
+ WinningRate 0.5082744 
+ SharpRatio 0.02534667 
+ TotalTrades 3714.555 
+ P&L Contribution 12.1889 % 
+
+Cluster 6 : 
+ Number 12.78959 %
+ P&L -2038.764 
+ WinningRate 0.5543374 
+ SharpRatio -0.2288072 
+ TotalTrades 3612.678 
+ P&L Contribution 22.43235 % 
+
+Multiple 1 : 47.43625 %
+Multiple 2 : 25.6413 %
+Multiple 3 : 29.49213 %
+Multiple 4 : 53.36145 %
+Multiple 5 : 98.23643 %
+Multiple 6 : 45.03529 %
+
+PL_900
+Cluster 1 : 
+ Number 0.188372 %
+ P&L -75540.61 
+ WinningRate 0.5088975 
+ SharpRatio 0.02378623 
+ TotalTrades 3725.275 
+ P&L Contribution 12.16491 % 
+
+Cluster 2 : 
+ Number 20.57898 %
+ P&L -1774.006 
+ WinningRate 0.469887 
+ SharpRatio 0.1293241 
+ TotalTrades 2714.656 
+ P&L Contribution 31.20981 % 
+
+Cluster 3 : 
+ Number 21.61913 %
+ P&L -1156.823 
+ WinningRate 0.4195438 
+ SharpRatio -0.09069714 
+ TotalTrades 2911.572 
+ P&L Contribution 21.38047 % 
+
+Cluster 4 : 
+ Number 9.278908 %
+ P&L -885.7206 
+ WinningRate 0.6186925 
+ SharpRatio 0.001393174 
+ TotalTrades 16129.26 
+ P&L Contribution 7.025961 % 
+
+Cluster 5 : 
+ Number 16.86816 %
+ P&L -1098.084 
+ WinningRate 0.6896147 
+ SharpRatio -0.1641158 
+ TotalTrades 3286.065 
+ P&L Contribution 15.83491 % 
+
+Cluster 6 : 
+ Number 20.17723 %
+ P&L -717.9351 
+ WinningRate 0.7266034 
+ SharpRatio 0.08569201 
+ TotalTrades 3185.299 
+ P&L Contribution 12.38394 % 
+
+Multiple 1 : 98.37235 %
+Multiple 2 : 35.45109 %
+Multiple 3 : 34.26503 %
+Multiple 4 : 54.86365 %
+Multiple 5 : 40.05951 %
+Multiple 6 : 35.88935 %
+
+
+PL_1100:
+Cluster 1 : 
+ Number 17.42229 %
+ P&L -1943.608 
+ WinningRate 0.4358865 
+ SharpRatio 0.1411563 
+ TotalTrades 3008.59 
+ P&L Contribution 29.3167 % 
+
+Cluster 2 : 
+ Number 23.95116 %
+ P&L -727.7923 
+ WinningRate 0.7055529 
+ SharpRatio 0.08486277 
+ TotalTrades 2999.436 
+ P&L Contribution 15.09159 % 
+
+Cluster 3 : 
+ Number 25.78302 %
+ P&L -1105.885 
+ WinningRate 0.4523726 
+ SharpRatio -0.09151725 
+ TotalTrades 2710.68 
+ P&L Contribution 24.68565 % 
+
+Cluster 4 : 
+ Number 13.84825 %
+ P&L -1001.017 
+ WinningRate 0.7305498 
+ SharpRatio -0.184595 
+ TotalTrades 3926.446 
+ P&L Contribution 12.00155 % 
+
+Cluster 5 : 
+ Number 0.1878429 %
+ P&L -75602.3 
+ WinningRate 0.5092324 
+ SharpRatio 0.02443157 
+ TotalTrades 3722.593 
+ P&L Contribution 12.29506 % 
+
+Cluster 6 : 
+ Number 8.992646 %
+ P&L -848.9394 
+ WinningRate 0.6169766 
+ SharpRatio 0.00448447 
+ TotalTrades 16384.86 
+ P&L Contribution 6.609449 % 
+
+Multiple 1 : 36.02793 %
+Multiple 2 : 29.04957 %
+Multiple 3 : 27.55718 %
+Multiple 4 : 41.53809 %
+Multiple 5 : 98.14409 %
+Multiple 6 : 52.18394 %
+

@@ -545,48 +545,48 @@ def SdA_extend_as_you_want(newx=None,newy=None,
 
 if __name__ == '__main__':
 
-    workenv="../dpdata/classifier"
-
-    filehead="../dpdata/multiple_dl_"
-
-    noofclu=[x+1 for x in range(6)]
-
-    #noofclu=[3,4,5,6]
-
-    datasetname=["_train.csv","_valid.csv","_valid.csv"] #这里的3个文件是传统的算法理的，必须都有Label
-                                                        #train,valid是正常的，test没有Label,test_pl有label有Pl
-
-    for i in noofclu:
-
-        print "Currently in Multiple %d" %i
-        dataset=[]
-
-        for j in datasetname:
-            dataset_name=[filehead,str(i),j]
-            dataset.append("".join(dataset_name))
-
-        #print dataset
-        resultname=[filehead,str(i),"_result_on_valid.csv"]
-
-        test_SdA(finetune_lr=0.1, pretraining_epochs=20,
-                pretrain_lr=0.1, training_epochs=200,
-                dataset=dataset,
-                n_in=27,n_out=2,
-                batch_size=10, hidden_layers=[300]*12,
-                corruption_levels=[.1,.2,.2,.2,.3,.3,.3,.3,.3,.35,.35,.4],
-                newx="".join([filehead,str(i),"_test.csv"]),newy="".join(resultname),
-                weights_file="".join([workenv,'_',str(i),'/']),
-                bias_file="".join([workenv,'_',str(i),'/']) )
-
+    # workenv="../dpdata/classifier"
+    #
+    # filehead="../dpdata/multiple_dl_"
+    #
     # noofclu=[x+1 for x in range(6)]
     #
-    # filehead="/Users/Yang/PycharmProjects/DeepLearningTutorials/PL_800/classifier_"
-    # resulthead='../dpdata/multiple_dl_'
+    # # noofclu=[6]
+    #
+    # datasetname=["_train.csv","_valid.csv","_valid.csv"] #这里的3个文件是传统的算法理的，必须都有Label
+    #                                                     #train,valid是正常的，test没有Label,test_pl有label有Pl
     #
     # for i in noofclu:
     #
-    #     SdA_extend_as_you_want(newx="../dpdata/multiple_extend_set.csv",
-    #                            newy="".join([resulthead,str(i),"_extend.csv"]),
-    #                             weights_file="".join([filehead,str(i),'/']),
-    #                             bias_file="".join([filehead,str(i),'/']),
-    #                             n_in=27,n_out=2,hidden_layers=[300]*12)
+    #     print "Currently in Multiple %d" %i
+    #     dataset=[]
+    #
+    #     for j in datasetname:
+    #         dataset_name=[filehead,str(i),j]
+    #         dataset.append("".join(dataset_name))
+    #
+    #     #print dataset
+    #     resultname=[filehead,str(i),"_result_on_valid.csv"]
+    #
+    #     test_SdA(finetune_lr=0.1, pretraining_epochs=20,
+    #             pretrain_lr=0.1, training_epochs=200,
+    #             dataset=dataset,
+    #             n_in=27,n_out=2,
+    #             batch_size=10, hidden_layers=[300]*12,
+    #             corruption_levels=[.1,.2,.2,.2,.3,.3,.3,.3,.3,.35,.35,.4],
+    #             newx="".join([filehead,str(i),"_test.csv"]),newy="".join(resultname),
+    #             weights_file="".join([workenv,'_',str(i),'/']),
+    #             bias_file="".join([workenv,'_',str(i),'/']) )
+
+    noofclu=[x+1 for x in range(6)]
+
+    filehead="/Users/Yang/PycharmProjects/DeepLearningTutorials/PL_800/classifier_"
+    resulthead='../dpdata/multiple_dl_'
+
+    for i in noofclu:
+
+        SdA_extend_as_you_want(newx="../dpdata/multiple_extend_set.csv",
+                               newy="".join([resulthead,str(i),"_extend.csv"]),
+                                weights_file="".join([filehead,str(i),'/']),
+                                bias_file="".join([filehead,str(i),'/']),
+                                n_in=27,n_out=2,hidden_layers=[300]*12)
