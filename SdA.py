@@ -5,7 +5,7 @@ import sys
 import time
 import csv
 import numpy
-
+import rpy2.robjects as ro
 import theano
 import theano.tensor as T
 from theano import pp
@@ -65,7 +65,7 @@ class SdA(object):
 
                 #read in hidden layer weights
 
-                print "Reading in the weights and bias of %d Hidden Layer\n" %(i+1)
+                print "Reading in the weights and bias of %d Hidden Layer" %(i+1)
 
                 weights_filename=[hiddenLayer_weights_file,str(i+1),"_hiddenLayer_W.csv"]
                 bias_filename=[hiddenLayer_bias_file,str(i+1),"_hiddenLayer_b.csv"]
@@ -417,10 +417,10 @@ def test_SdA(finetune_lr=0.01, pretraining_epochs=30,
 
                     test_losses = test_model() #只有在validation上最小才会给机会在test上测试
                     test_score = numpy.mean(test_losses)
-                    print(('     epoch %i, minibatch %i/%i, test error of '
-                           'best model %f %%') %
-                          (epoch, minibatch_index + 1, n_train_batches,
-                           test_score * 100.))
+                    # print(('     epoch %i, minibatch %i/%i, test error of '
+                    #        'best model %f %%') %
+                    #       (epoch, minibatch_index + 1, n_train_batches,
+                    #        test_score * 100.))
 
             if patience <= iter: #iter会一直变大，patience在每次得到新的结果时也会变大
                 done_looping = True
@@ -442,7 +442,7 @@ def test_SdA(finetune_lr=0.01, pretraining_epochs=30,
 
     if weights_file is not None:
 
-        print("\n Extracting weights: \n")
+        print("\n Extracting weights:")
 
         if not os.path.exists(weights_file):
             os.makedirs(weights_file)
@@ -473,9 +473,9 @@ def test_SdA(finetune_lr=0.01, pretraining_epochs=30,
 
 
     if newx is None:
-        print "There is no extending data"
+        print "There is no extending data \n"
     else:
-        print "Now extending on the new data \n"
+        #print "Now extending on the new data \n"
 
         #read in data
         f=open(newx,"rb")
@@ -497,7 +497,7 @@ def test_SdA(finetune_lr=0.01, pretraining_epochs=30,
         #print(labels)
         fmt = ",".join(["%i"] + ["%f"])
         numpy.savetxt(newy,zip(labels,prob),fmt=fmt,delimiter=',')
-        print "New label has been generated! \n"
+        #print "New label has been generated! \n"
 
 
 
@@ -505,7 +505,7 @@ def SdA_extend_as_you_want(newx=None,newy=None,
                            weights_file=None,bias_file=None,
                            n_in=None,n_out=None,hidden_layers=[100,100]):
 
-    print "This is a separate extending with given weights!\n"
+
 
     numpy_rng = numpy.random.RandomState(89757)
 
@@ -528,7 +528,7 @@ def SdA_extend_as_you_want(newx=None,newy=None,
         hiddenLayer_weights_file=weights_file,hiddenLayer_bias_file=bias_file
     )
 
-    print "Extending on the new data\n"
+    print "Extending on the new data"
     #compile the function
     extend_model = theano.function(
     inputs=[],
@@ -543,50 +543,313 @@ def SdA_extend_as_you_want(newx=None,newy=None,
     print "New label has been generated!"
 
 
-if __name__ == '__main__':
 
-    # workenv="../dpdata/classifier"
-    #
-    # filehead="../dpdata/multiple_dl_"
-    #
-    # noofclu=[x+1 for x in range(6)]
-    #
-    # # noofclu=[6]
-    #
-    # datasetname=["_train.csv","_valid.csv","_valid.csv"] #这里的3个文件是传统的算法理的，必须都有Label
-    #                                                     #train,valid是正常的，test没有Label,test_pl有label有Pl
-    #
-    # for i in noofclu:
-    #
-    #     print "Currently in Multiple %d" %i
-    #     dataset=[]
-    #
-    #     for j in datasetname:
-    #         dataset_name=[filehead,str(i),j]
-    #         dataset.append("".join(dataset_name))
-    #
-    #     #print dataset
-    #     resultname=[filehead,str(i),"_result_on_valid.csv"]
-    #
-    #     test_SdA(finetune_lr=0.1, pretraining_epochs=20,
-    #             pretrain_lr=0.1, training_epochs=200,
-    #             dataset=dataset,
-    #             n_in=27,n_out=2,
-    #             batch_size=10, hidden_layers=[300]*12,
-    #             corruption_levels=[.1,.2,.2,.2,.3,.3,.3,.3,.3,.35,.35,.4],
-    #             newx="".join([filehead,str(i),"_test.csv"]),newy="".join(resultname),
-    #             weights_file="".join([workenv,'_',str(i),'/']),
-    #             bias_file="".join([workenv,'_',str(i),'/']) )
 
-    noofclu=[x+1 for x in range(6)]
+def main(argv=sys.argv):
 
-    filehead="/Users/Yang/PycharmProjects/DeepLearningTutorials/PL_800/classifier_"
-    resulthead='../dpdata/multiple_dl_'
 
-    for i in noofclu:
+    if sys.argv[1]=="LCG-CC-Train":
 
-        SdA_extend_as_you_want(newx="../dpdata/multiple_extend_set.csv",
-                               newy="".join([resulthead,str(i),"_extend.csv"]),
+
+        #############################
+        ### pre-processing using R ##
+        #############################
+
+        print ('\nCalling R to pre-processing the data\n')
+
+        r=ro.r
+
+        wd="".join(['setwd(\'' ,os.getcwd().replace('code','dpdata'),'\')'])
+
+        r(wd)
+
+        r.source('../dpdata/LCG-CC-PreProcessing.R')
+
+        ro.globalenv['pl_threshold']=float(sys.argv[13])
+
+        ro.globalenv['num_clusters']=int(sys.argv[12])
+
+        ro.globalenv['train_test_ratio']=float(sys.argv[3])
+
+        ro.globalenv['training_data']=sys.argv[2]
+
+        ro.globalenv['label_no']=int(sys.argv[4])
+
+        no_input=int(r('train_preprocessing(pl_threshold,num_clusters,train_test_ratio,training_data,label_no)')[0])
+
+        #preprocessing return the number of output
+
+
+        no_output=2
+
+        #############################
+        ### Training the model   ####
+        #############################
+
+        training_learning_rate=float(sys.argv[5])
+
+        tuning_learning_rate=float(sys.argv[6])
+
+        training_epochs=int(sys.argv[7])
+
+        tuning_epochs=int(sys.argv[8])
+
+        batchsize=int(sys.argv[9])
+
+        hiddenlayers=eval(sys.argv[10])
+
+        noise_level=eval(sys.argv[11])
+
+
+
+
+        workenv="../dpdata/classifier"    #存权重
+
+        filehead="../dpdata/multiple_dl_" #存结果
+
+        noofclu=[x+1 for x in range(int(sys.argv[12]))]
+
+        # noofclu=[6]
+
+        datasetname=["_train.csv","_valid.csv","_valid.csv"] #这里的3个文件是传统的算法理的，必须都有Label
+                                                        #train,valid是正常的，test没有Label,test_pl有label有Pl
+
+        for i in noofclu:
+
+            print "Building Sub-Classifier:  %d" %i
+            dataset=[]
+
+            for j in datasetname:
+                dataset_name=[filehead,str(i),j]
+                dataset.append("".join(dataset_name))
+
+            #print dataset
+            resultname=[filehead,str(i),"_result_on_valid.csv"]
+
+            test_SdA(finetune_lr=tuning_learning_rate, pretraining_epochs=training_epochs,
+                    pretrain_lr=training_learning_rate, training_epochs=tuning_epochs,
+                    dataset=dataset,
+                    n_in=no_input,n_out=no_output,
+                    batch_size=batchsize, hidden_layers=hiddenlayers,
+                    corruption_levels=noise_level,
+                    newx="".join([filehead,str(i),"_test.csv"]),newy="".join(resultname),
+                    weights_file="".join([workenv,'_',str(i),'/']),
+                    bias_file="".join([workenv,'_',str(i),'/']) )
+
+
+    elif sys.argv[1]=="LCG-CC-Extend":
+
+        #####################################
+        ### Extending the model on new data #
+        #####################################
+
+        #注意extend的时候要看清楚当前读入的weights是哪个pl定义下的,weights的clasifier文件名前面没有pl的名字
+
+
+        noofclu=[x+1 for x in range(int(sys.argv[6]))]
+
+        ro.globalenv['training_data']=sys.argv[2]
+
+        ro.globalenv['extending_data']=sys.argv[3]
+
+        ro.globalenv['non_feature']=int(sys.argv[4])
+
+
+        hiddenlayers=eval(sys.argv[5])
+
+
+        print ('\nCalling R to pre-processing the data\n')
+
+        r=ro.r
+
+        wd="".join(['setwd(\'' ,os.getcwd().replace('code','dpdata'),'\')'])
+
+        r(wd)
+
+        r.source('../dpdata/LCG-CC-PreProcessing.R')
+
+        #normalize the data using R
+        no_input=int(r('extend_preprocessing(training_data,extending_data, non_feature)')[0])
+
+        no_output=2
+
+
+
+        filehead="../dpdata/classifier_"
+
+        resulthead='../dpdata/multiple_dl_'
+
+
+        for i in noofclu:
+
+            print "In Sub-Classifier:  %d" %i
+
+            SdA_extend_as_you_want(newx="../dpdata/multiple_extend_set.csv",
+                                newy="".join([resulthead,str(i),"_extend.csv"]),
                                 weights_file="".join([filehead,str(i),'/']),
                                 bias_file="".join([filehead,str(i),'/']),
-                                n_in=27,n_out=2,hidden_layers=[300]*12)
+                                n_in=no_input,n_out=no_output,hidden_layers=hiddenlayers)
+
+
+        #########################################
+        ### post-precessing the results using R #
+        #########################################
+
+        r('rm(list=ls())')
+
+        r(wd)
+
+        ro.globalenv['extending_data']=sys.argv[3]
+
+        ro.globalenv['non_feature']=int(sys.argv[4])
+
+        ro.globalenv['num_clusters']=float(sys.argv[6])
+
+        r.source('../dpdata/LCG-CC-PostProcessing.R')
+
+        r('postprocessing(num_clusters,extending_data,non_feature)')
+
+
+
+
+
+    elif sys.argv[1]=="DeepLearning-Train":
+
+        # this is separate use of deep learning
+
+        #######################################
+        ####### calling R  preprocessing   ####
+        #######################################
+
+        r=ro.r
+
+        wd="".join(['setwd(\'' ,os.getcwd().replace('code','dpdata'),'\')'])
+
+        r(wd)
+
+        r.source('../dpdata/DeepLearning-PreProcessing.R')
+
+
+        ro.globalenv['train_test_ratio']=float(sys.argv[3])
+
+        ro.globalenv['training_data']=sys.argv[2]
+
+        ro.globalenv['label_no']=int(sys.argv[4])
+
+        inout=r('train_preprocessing(train_test_ratio,training_data,label_no)')
+
+        no_input=int(inout[0])
+        no_output=int(inout[1])
+        ########################################
+        ##########
+
+        datasetname=["../dpdata/DP_train.csv","../dpdata/DP_valid.csv","../dpdata/DP_valid.csv"]
+
+        training_learning_rate=float(sys.argv[5])
+
+        tuning_learning_rate=float(sys.argv[6])
+
+        training_epochs=int(sys.argv[7])
+
+        tuning_epochs=int(sys.argv[8])
+
+        batchsize=int(sys.argv[9])
+
+        hiddenlayers=eval(sys.argv[10])
+
+        noise_level=eval(sys.argv[11])
+
+        test_SdA(finetune_lr=tuning_learning_rate, pretraining_epochs=training_epochs,
+                pretrain_lr=training_learning_rate, training_epochs=tuning_epochs,
+                dataset=datasetname,
+                n_in=no_input,n_out=no_output,
+                batch_size=batchsize, hidden_layers=hiddenlayers,
+                corruption_levels=noise_level,
+                #newx="".join([filehead,str(i),"_test.csv"]),newy="".join(resultname),
+                weights_file="../dpdata/DP_classifier/" ,
+                bias_file="../dpdata/DP_classifier/"  )
+
+    elif sys.argv[1]=='DeepLearning-Extend':
+        #####################################
+        ### Extending the model on new data #
+        #####################################
+
+        #注意extend的时候要看清楚当前读入的weights是哪个pl定义下的,weights的clasifier文件名前面没有pl的名字
+
+        ro.globalenv['training_data']=sys.argv[2]
+
+        ro.globalenv['extending_data']=sys.argv[3]
+
+        ro.globalenv['non_feature']=int(sys.argv[4])
+
+        hiddenlayers=eval(sys.argv[5])
+
+
+        print ('\nCalling R to pre-processing the data\n')
+
+        r=ro.r
+
+        wd="".join(['setwd(\'' ,os.getcwd().replace('code','dpdata'),'\')'])
+
+        r(wd)
+
+        r.source('../dpdata/DeepLearning-PreProcessing.R')
+
+        #normalize the data using R
+        inout=r('extend_preprocessing(training_data,extending_data, non_feature)')
+
+        no_input=int(inout[0])
+        no_output=int(inout[1])
+
+        filehead="../dpdata/DP_classifier/"               # weights
+
+        resulthead='../dpdata/DP_result.csv' #results name
+
+
+        SdA_extend_as_you_want(newx="../dpdata/DP_extend.csv",
+                            newy=resulthead,
+                            weights_file=filehead,
+                            bias_file=filehead,
+                            n_in=no_input,n_out=no_output,hidden_layers=hiddenlayers)
+
+
+        #########################################
+        ### post-precessing the results using R #
+        #########################################
+
+        # r('rm(list=ls())')
+        #
+        # r(wd)
+        #
+        # ro.globalenv['extending_data']=sys.argv[3]
+        #
+        # ro.globalenv['non_feature']=int(sys.argv[4])
+        #
+        # ro.globalenv['num_clusters']=float(sys.argv[5])
+        #
+        # r.source('../dpdata/multiple_optimize.R')
+        #
+        # r('postprocessing(num_clusters,extending_data,non_feature)')
+
+
+
+    else:
+
+        raise ValueError("Please Input \'LCG-CC-Train\' or \'LCG-CC-Extend\' \n \'DeepLearning-Extend\' or \'DeepLearning-Train\' ")
+
+
+
+
+
+
+if __name__ == '__main__':
+
+   main()
+
+   #python SdA.py LCG-CC-Extend multiple_deeplearning.csv multiple_deeplearning_extend.csv 19 [100]*2 5
+
+   #python SdA.py LCG-CC-Train multiple_deeplearning.csv 0.8 19 0.1 0.1 2 2 1 [100]*2 [0.3]*2 5 1100
+
+   #python SdA.py DeepLearning-Train m_train.csv 0.9 11 0.1 0.1 2 2 1 [100]*2 [0.1]*2
+
+   #python SdA.py DeepLearning-Extend m_train.csv m_extend.csv 11 [100]*2
