@@ -296,6 +296,12 @@ class SdA(object):
 
         return (self.p_newy,T.max(self.p_newy_given_x,axis=1))
 
+    def sda_show_all_labels(self,extendinput):
+
+        self.p_newy_given_x = T.nnet.softmax(T.dot(self.sda_show_pretraining_labels(extendinput,self.n_layers-1)
+                                                   , self.logLayer.W) + self.logLayer.b)
+
+        return (self.p_newy_given_x)
 
 
 
@@ -529,17 +535,29 @@ def SdA_extend_as_you_want(newx=None,newy=None,
     )
 
     print "Extending on the new data"
-    #compile the function
+
+    #compile the function,this returns the label and its prob
     extend_model = theano.function(
     inputs=[],
     outputs=sda.sda_show_labels(newinput)
      #如果想要返回一个用theano计算的函数，那么一定要额外在主函数里建一个专门返回子函数的函数
     )
 
+    #this returns the prob of being all labels
+    extend_model_all_results = theano.function(
+    inputs=[],
+    outputs=sda.sda_show_all_labels(newinput)
+     #如果想要返回一个用theano计算的函数，那么一定要额外在主函数里建一个专门返回子函数的函数
+    )
+
+
+
     labels,prob=extend_model()
-    #print(labels)
+    prob_matrix=extend_model_all_results()
+    #print(prob_matrix)
     fmt = ",".join(["%i"] + ["%f"])
-    numpy.savetxt(newy,zip(labels,prob),fmt=fmt,delimiter=',')
+    numpy.savetxt(newy[0],zip(labels,prob),fmt=fmt,delimiter=',') #save the label
+    numpy.savetxt(newy[1],numpy.asarray(prob_matrix),delimiter=',')
     print "New label has been generated!"
 
 
@@ -547,6 +565,11 @@ def SdA_extend_as_you_want(newx=None,newy=None,
 
 def main(argv=sys.argv):
 
+    #debug-train:
+    #sys.argv = [sys.argv[0], 'DeepLearning-Train', 'm_train.csv', '0.9', '11', '0.1', '0.1', '2', '2', '1', '[100]*2', '[0.1]*2']
+
+    #debug-extend:
+    sys.argv = [sys.argv[0], 'DeepLearning-Extend', 'm_train.csv', 'm_extend.csv', '11', '[100]*2']
 
     if sys.argv[1]=="LCG-CC-Train":
 
@@ -803,7 +826,7 @@ def main(argv=sys.argv):
 
         filehead="../dpdata/DP_classifier/"               # weights
 
-        resulthead='../dpdata/DP_result.csv' #results name
+        resulthead=['../dpdata/DP_result.csv','../dpdata/DP_result_all.csv'] #results name
 
 
         SdA_extend_as_you_want(newx="../dpdata/DP_extend.csv",
@@ -844,7 +867,8 @@ def main(argv=sys.argv):
 
 if __name__ == '__main__':
 
-   main()
+
+    main()
 
    #python SdA.py LCG-CC-Extend multiple_deeplearning.csv multiple_deeplearning_extend.csv 19 [100]*2 5
 
