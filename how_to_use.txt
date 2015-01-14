@@ -1,0 +1,74 @@
+
+
+
+How to use:
+
+[1] LCG Client Classification Problem:
+
+Train:
+python [0] [1] [2] [3] [4] [5] [6] [7] [8] [9] [10] [11] [12] [13]
+python SdA.py LCG-CC-Train lcg-train.csv 0.8 19 0.1 0.1 1 1 1 [150]*2 [0.3]*2 5 1100
+
+Extend:
+python [0] [1] [2] [14] [15] [10] [12]
+python SdA.py LCG-CC-Extend lcg-train.csv lcg-extend.csv 19 [150]*2 5
+
+
+[2] Deep Learning Algo:
+
+Train:
+python [0] [1] [2] [3] [4] [5] [6] [7] [8] [9] [10] [11]
+python SdA.py DeepLearning-Train m_train.csv 0.9 11 0.1 0.1 2 2 1 [100]*2 [0.1]*2
+
+Extend:
+python [0] [1] [2] [14] [15] [10]
+python SdA.py DeepLearning-Extend m_train.csv m_extend.csv 11 [100]*2
+
+
+
+Parameter Lists:
+
+[0]: the file name of the code: SdA.py. Stacked denoising Auto-encoder
+
+[1]: 4 optional modes: LCG-CC-Train, LCG-CC-Extend, DeepLearning-Train, DeepLearning-Extend 
+
+[2]: the file name of the training data, i.e. m_train.csv
+
+[3]: the ratio of training data vs validating data, i.e. 0.8,0.9
+
+[4]: the column number of the label in the training data, training features should be in the left, in the case of LCG client classification, clustering features should be in the right, and the first column next to the label should be the index that is used to adjust each sub-classifier. For example, the 19th column is the label P&L_Next100, then the 20th column should be P&L_Next20. 
+
+[5]: learning rate in the un-supervised process, the step size each pre-training epoch goes forward, 0.01~0.1
+
+[6]: learning rate in the supervised process, the step size each tuning	epoch goes forward, 0.01~0.1
+
+[7]: the number of epochs in the un-supervised process, i.e. 30
+
+[8]: the number of epochs in the supervised process, i.e. 200
+
+* small learning rate has a good performance in finding the global optimal, but converges slowly, the number of epochs should be big enough in this case.
+
+[9]: batch size, the amount of the training samples the stochastic gradient descent algo takes in each training step. i.e. 1,5,10,20
+
+[10]: the settings of hidden layers, i.e. [100,200,300] means 3 hidden layers with 100,200,300 hidden units respectively, [200]*12 means 12 hidden layers with 200 hidden units.
+
+[11]: noise level: one number for each hidden layer, 0~1, i.e. [0.1,0.2,0.3] means knocking out 10%, 20%, 30% of the training samples out (thus adding the noise) when training the hidden layer 1,2,3.
+
+[12]: number of sub-classifiers: since low risky clients are too much, the algo will cluster (K-means) into certain different groups based on the features in the right hand side of the columns to [4] (included) in the training sample. Clustering features cannot be categorical. 
+
+According to the different high risky clients defintion, there will be different ratio of low risky to hight risky (the ratio can be seen when running the programme). for example, if the low risky clients is 70%, hight risky clients is 30%, then the proper number of sub classifers should be 2, because 35%-30% is much more balanced than 70%-30%. 
+
+[13]: the high risky clients threshold, if use P&L then 800~1200 is appropriate, if use sharp ratio then 0.1, 0.2 is appropriate
+
+
+[14]: the file name of extending data.
+
+[15]: the column number of the column next to the last feature in the extending data. for example, fea1|fea2|fea3, this number should be 4. fea1|fea2|fea3|fea4|accountid|date, this  number should be 5.
+
+
+
+
+
+
+
+ 
