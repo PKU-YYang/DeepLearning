@@ -3,7 +3,7 @@
 import os
 import sys
 import time
-import csv
+import re
 import numpy
 import rpy2.robjects as ro
 import theano
@@ -280,7 +280,7 @@ class SdA(object):
 
 
     def sda_show_pretraining_labels(self, extendinput,i):
-
+        #input: n*m hidden_w: m*hidden_units hidden_b:hidden_units*1
         if i==0:
             return T.nnet.sigmoid(T.dot(extendinput, self.sigmoid_layers[i].W) + self.sigmoid_layers[i].b)
         else:
@@ -293,6 +293,8 @@ class SdA(object):
                                                    , self.logLayer.W) + self.logLayer.b)
 
         self.p_newy = T.cast(T.argmax(self.p_newy_given_x, axis=1),'int32')
+        #返回的是序号，axis=0是找每列中的最大值对应的行号，axis=1是找每行中得最大值对应的列号，计数是从0开始的
+        #numpy.argmax
 
         return (self.p_newy,T.max(self.p_newy_given_x,axis=1))
 
@@ -569,7 +571,7 @@ def main(argv=sys.argv):
     #sys.argv = [sys.argv[0], 'DeepLearning-Train', 'm_train.csv', '0.9', '11', '0.1', '0.1', '2', '2', '1', '[100]*2', '[0.1]*2']
 
     #debug-extend:
-    sys.argv = [sys.argv[0], 'DeepLearning-Extend', 'm_train.csv', 'm_extend.csv', '11', '[100]*2']
+    #sys.argv = [sys.argv[0], 'DeepLearning-Extend', 'm_train.csv', 'm_extend.csv', '11', '[100]*2']
 
     if sys.argv[1]=="LCG-CC-Train":
 
@@ -586,7 +588,7 @@ def main(argv=sys.argv):
 
         r(wd)
 
-        r.source('../dpdata/LCG-CC-PreProcessing.R')
+        r.source('../code/LCG-CC-PreProcessing.R')
 
         ro.globalenv['pl_threshold']=float(sys.argv[13])
 
@@ -689,7 +691,7 @@ def main(argv=sys.argv):
 
         r(wd)
 
-        r.source('../dpdata/LCG-CC-PreProcessing.R')
+        r.source('../code/LCG-CC-PreProcessing.R')
 
         #normalize the data using R
         no_input=int(r('extend_preprocessing(training_data,extending_data, non_feature)')[0])
@@ -728,7 +730,7 @@ def main(argv=sys.argv):
 
         ro.globalenv['num_clusters']=float(sys.argv[6])
 
-        r.source('../dpdata/LCG-CC-PostProcessing.R')
+        r.source('../code/LCG-CC-PostProcessing.R')
 
         r('postprocessing(num_clusters,extending_data,non_feature)')
 
@@ -744,13 +746,16 @@ def main(argv=sys.argv):
         ####### calling R  preprocessing   ####
         #######################################
 
+
+        dpdata_address=re.search('/\w*/',sys.argv[2]).group(0).replace('/','',2)
+
         r=ro.r
 
-        wd="".join(['setwd(\'' ,os.getcwd().replace('code','dpdata'),'\')'])
+        wd="".join(['setwd(\'' ,os.getcwd().replace('code',dpdata_address),'\')'])
 
         r(wd)
 
-        r.source('../dpdata/DeepLearning-PreProcessing.R')
+        r.source('../code/DeepLearning-PreProcessing.R')
 
 
         ro.globalenv['train_test_ratio']=float(sys.argv[3])
@@ -766,7 +771,7 @@ def main(argv=sys.argv):
         ########################################
         ##########
 
-        datasetname=["../dpdata/DP_train.csv","../dpdata/DP_valid.csv","../dpdata/DP_valid.csv"]
+        datasetname=["".join(["../",dpdata_address,"/DP_valid.csv"]),"".join(["../",dpdata_address,"/DP_valid.csv"]),"".join(["../",dpdata_address,"/DP_valid.csv"])]
 
         training_learning_rate=float(sys.argv[5])
 
@@ -789,8 +794,8 @@ def main(argv=sys.argv):
                 batch_size=batchsize, hidden_layers=hiddenlayers,
                 corruption_levels=noise_level,
                 #newx="".join([filehead,str(i),"_test.csv"]),newy="".join(resultname),
-                weights_file="../dpdata/DP_classifier/" ,
-                bias_file="../dpdata/DP_classifier/"  )
+                weights_file="".join(["../",dpdata_address,"/DP_classifier/"]),
+                bias_file="".join(["../",dpdata_address,"/DP_classifier/" ]))
 
     elif sys.argv[1]=='DeepLearning-Extend':
         #####################################
@@ -810,13 +815,16 @@ def main(argv=sys.argv):
 
         print ('\nCalling R to pre-processing the data\n')
 
+
+        dpdata_address=re.search('/\w*/',sys.argv[2]).group(0).replace('/','',2)
+
         r=ro.r
 
-        wd="".join(['setwd(\'' ,os.getcwd().replace('code','dpdata'),'\')'])
+        wd="".join(['setwd(\'' ,os.getcwd().replace('code',dpdata_address),'\')'])
 
         r(wd)
 
-        r.source('../dpdata/DeepLearning-PreProcessing.R')
+        r.source('../code/DeepLearning-PreProcessing.R')
 
         #normalize the data using R
         inout=r('extend_preprocessing(training_data,extending_data, non_feature)')
@@ -824,12 +832,12 @@ def main(argv=sys.argv):
         no_input=int(inout[0])
         no_output=int(inout[1])
 
-        filehead="../dpdata/DP_classifier/"               # weights
+        filehead="".join(["../",dpdata_address,"/DP_classifier/"])               # weights
 
-        resulthead=['../dpdata/DP_result.csv','../dpdata/DP_result_all.csv'] #results name
+        resulthead=["".join(["../",dpdata_address,"/DP_result.csv"]),"".join(["../",dpdata_address,"/DP_result_all.csv"])] #results name
 
 
-        SdA_extend_as_you_want(newx="../dpdata/DP_extend.csv",
+        SdA_extend_as_you_want(newx="".join(["../",dpdata_address,"/DP_extend.csv"]),
                             newy=resulthead,
                             weights_file=filehead,
                             bias_file=filehead,
@@ -870,10 +878,10 @@ if __name__ == '__main__':
 
     main()
 
-   #python SdA.py LCG-CC-Extend multiple_deeplearning.csv multiple_deeplearning_extend.csv 19 [100]*2 5
+   #python SdA.py LCG-CC-Extend lcg_train.csv lcg_extend.csv 19 [100]*2 5
 
-   #python SdA.py LCG-CC-Train multiple_deeplearning.csv 0.8 19 0.1 0.1 2 2 1 [100]*2 [0.3]*2 5 1100
+   #python SdA.py LCG-CC-Train lcg_train.csv 0.8 19 0.1 0.1 2 2 1 [100]*2 [0.3]*2 5 1100
 
-   #python SdA.py DeepLearning-Train m_train.csv 0.9 11 0.1 0.1 2 2 1 [100]*2 [0.1]*2
+   #python SdA.py DeepLearning-Train ../dpdata/m_train.csv 0.9 11 0.1 0.1 2 2 1 [100]*2 [0.1]*2
 
-   #python SdA.py DeepLearning-Extend m_train.csv m_extend.csv 11 [100]*2
+   #python SdA.py DeepLearning-Extend ../dpdata/m_train.csv m_extend.csv 11 [100]*2

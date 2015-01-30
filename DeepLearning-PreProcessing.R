@@ -2,7 +2,7 @@
 zeroone_normalizaiton=function(x){
   x=scale(x,scale=F)
   #y=whiten(features)$U
-  y=(x-min(x))/(max(x)-min(x))
+  y=(x-min(x))/(max(x)-min(x)) # 0-1 归一化做不做scale都没有关系
   
   return(y)
 }
@@ -63,7 +63,7 @@ extend_preprocessing=function(training_data,extending_data,non_feature){
   
   } 
   
-  write.csv(extend_set,file='../dpdata/DP_extend.csv',row.names=F)
+  write.csv(extend_set,file='DP_extend.csv',row.names=F)
   
   return(c(ncol(extend_set),length(unique(clients[,non_feature]))))
 }
@@ -131,8 +131,8 @@ testno=setdiff(1:nrow(train_dataset),trainno)
 train_set=train_dataset[trainno,]
 test_set=train_dataset[testno,]
 
-write.csv(train_set,"../dpdata/DP_train.csv",row.names=F)
-write.csv(test_set,"../dpdata/DP_valid.csv",row.names=F)
+write.csv(train_set,"DP_train.csv",row.names=F)
+write.csv(test_set,"DP_valid.csv",row.names=F)
 
 return(c(ncol(train_set)-1,length(unique(clients[,label_no]))))
 

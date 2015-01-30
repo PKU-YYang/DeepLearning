@@ -1,3 +1,4 @@
+#-*- coding:utf-8 -*-
 """
 This tutorial introduces the multilayer perceptron using Theano.
 
@@ -98,7 +99,7 @@ class HiddenLayer(object):
 
         self.W = W
         self.b = b
-
+        #hidden layer的输出是连续数值，在0,1之间
         lin_output = T.dot(input, self.W) + self.b
         self.output = (
             lin_output if activation is None

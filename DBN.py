@@ -1,3 +1,5 @@
+#-*- coding:utf-8 -*-
+
 """
 """
 import os
@@ -60,80 +62,56 @@ class DBN(object):
         if not theano_rng:
             theano_rng = RandomStreams(numpy_rng.randint(2 ** 30))
 
-        # allocate symbolic variables for the data
-        self.x = T.matrix('x')  # the data is presented as rasterized images
-        self.y = T.ivector('y')  # the labels are presented as 1D vector
-                                 # of [int] labels
-        # end-snippet-1
-        # The DBN is an MLP, for which all weights of intermediate
-        # layers are shared with a different RBM.  We will first
-        # construct the DBN as a deep multilayer perceptron, and when
-        # constructing each sigmoidal layer we also construct an RBM
-        # that shares weights with that layer. During pretraining we
-        # will train these RBMs (which will lead to chainging the
-        # weights of the MLP as well) During finetuning we will finish
-        # training the DBN by doing stochastic gradient descent on the
-        # MLP.
+
+        self.x = T.matrix('x')
+        self.y = T.ivector('y')
+
 
         for i in xrange(self.n_layers):
-            # construct the sigmoidal layer
 
-            # the size of the input is either the number of hidden
-            # units of the layer below or the input size if we are on
-            # the first layer
             if i == 0:
                 input_size = n_ins
             else:
                 input_size = hidden_layers_sizes[i - 1]
 
-            # the input to this layer is either the activation of the
-            # hidden layer below or the input of the DBN if you are on
-            # the first layer
             if i == 0:
                 layer_input = self.x
             else:
-                layer_input = self.sigmoid_layers[-1].output
+                layer_input = self.sigmoid_layers[-1].output #这个是前一层的输出
 
+            #真正的deep learning network
             sigmoid_layer = HiddenLayer(rng=numpy_rng,
                                         input=layer_input,
                                         n_in=input_size,
                                         n_out=hidden_layers_sizes[i],
                                         activation=T.nnet.sigmoid)
 
-            # add the layer to our list of layers
             self.sigmoid_layers.append(sigmoid_layer)
 
-            # its arguably a philosophical question...  but we are
-            # going to only declare that the parameters of the
-            # sigmoid_layers are parameters of the DBN. The visible
-            # biases in the RBM are parameters of those RBMs, but not
-            # of the DBN.
+            #rbm只是用来train，本身不能算网络的组成部分
             self.params.extend(sigmoid_layer.params)
 
             # Construct an RBM that shared weights with this layer
             rbm_layer = RBM(numpy_rng=numpy_rng,
                             theano_rng=theano_rng,
-                            input=layer_input,
+                            input=layer_input, #这里说明rbm的输入可以是连续数值
                             n_visible=input_size,
                             n_hidden=hidden_layers_sizes[i],
-                            W=sigmoid_layer.W,
+                            W=sigmoid_layer.W, #这样rbm训练修改以后所有的w和b就是传入了mlp里面，并没有v
                             hbias=sigmoid_layer.b)
             self.rbm_layers.append(rbm_layer)
 
-        # We now need to add a logistic layer on top of the MLP
+        # 最顶层放Logistic
         self.logLayer = LogisticRegression(
             input=self.sigmoid_layers[-1].output,
             n_in=hidden_layers_sizes[-1],
             n_out=n_outs)
         self.params.extend(self.logLayer.params)
 
-        # compute the cost for second phase of training, defined as the
-        # negative log likelihood of the logistic regression (output) layer
+        # 顶层的cost，也是整个网络的cost
         self.finetune_cost = self.logLayer.negative_log_likelihood(self.y)
 
-        # compute the gradients with respect to the model parameters
-        # symbolic variable that points to the number of errors made on the
-        # minibatch given by self.x and self.y
+        #每个minibatch的错误
         self.errors = self.logLayer.errors(self.y)
 
     def pretraining_functions(self, train_set_x, batch_size, k):
@@ -152,36 +130,31 @@ class DBN(object):
 
         '''
 
+        #返回训练每层的函数壳
         # index to a [mini]batch
-        index = T.lscalar('index')  # index to a minibatch
-        learning_rate = T.scalar('lr')  # learning rate to use
+        index = T.lscalar('index')
+        learning_rate = T.scalar('lr')
 
-        # number of batches
+        # number of minibatches
         n_batches = train_set_x.get_value(borrow=True).shape[0] / batch_size
-        # begining of a batch, given `index`
         batch_begin = index * batch_size
-        # ending of a batch given `index`
         batch_end = batch_begin + batch_size
 
         pretrain_fns = []
         for rbm in self.rbm_layers:
 
-            # get the cost and the updates list
-            # using CD-k here (persisent=None) for training each RBM.
-            # TODO: change cost function to reconstruction error
-            cost, updates = rbm.get_cost_updates(learning_rate,
-                                                 persistent=None, k=k)
+            #训练DBN的时候用的是CDK
+            cost, updates = rbm.get_cost_updates(learning_rate,persistent=None, k=k)
 
             # compile the theano function
             fn = theano.function(
-                inputs=[index, theano.Param(learning_rate, default=0.1)],
+                inputs=[index, theano.Param(learning_rate, default=0.1)], #lr是这个参数的名字，不是learning_rate
                 outputs=cost,
                 updates=updates,
                 givens={
                     self.x: train_set_x[batch_begin:batch_end]
                 }
             )
-            # append `fn` to the list of functions
             pretrain_fns.append(fn)
 
         return pretrain_fns
@@ -205,6 +178,11 @@ class DBN(object):
 
         '''
 
+        # Generates a function `train` that implements one step of
+        # finetuning, a function `validate` that computes the error on a
+        # batch from the validation set, and a function `test` that
+        # computes the error on a batch from the testing set
+
         (train_set_x, train_set_y) = datasets[0]
         (valid_set_x, valid_set_y) = datasets[1]
         (test_set_x, test_set_y) = datasets[2]
@@ -217,7 +195,7 @@ class DBN(object):
 
         index = T.lscalar('index')  # index to a [mini]batch
 
-        # compute the gradients with respect to the model parameters
+        #这里的cost就是logsitc level的cost,熵
         gparams = T.grad(self.finetune_cost, self.params)
 
         # compute list of fine-tuning updates
@@ -317,7 +295,7 @@ def test_DBN(finetune_lr=0.1, pretraining_epochs=100,
               hidden_layers_sizes=[1000, 1000, 1000],
               n_outs=10)
 
-    # start-snippet-2
+
     #########################
     # PRETRAINING THE MODEL #
     #########################
@@ -335,13 +313,13 @@ def test_DBN(finetune_lr=0.1, pretraining_epochs=100,
             # go through the training set
             c = []
             for batch_index in xrange(n_train_batches):
-                c.append(pretraining_fns[i](index=batch_index,
+                c.append(pretraining_fns[i](index=batch_index, #训练第i层
                                             lr=pretrain_lr))
             print 'Pre-training layer %i, epoch %d, cost ' % (i, epoch),
             print numpy.mean(c)
 
     end_time = time.clock()
-    # end-snippet-2
+
     print >> sys.stderr, ('The pretraining code for file ' +
                           os.path.split(__file__)[1] +
                           ' ran for %.2fm' % ((end_time - start_time) / 60.))

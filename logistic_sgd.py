@@ -86,7 +86,7 @@ class LogisticRegression(object): #As for the logistic regression we will
 
 def load_data(trainset,validset,testset):
 
-
+    #分别读入三个文件并share他们
     f=open(validset,"rb")
     data=numpy.loadtxt(f,delimiter=',',dtype=float,skiprows=1)
     f.close()
