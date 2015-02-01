@@ -8,7 +8,7 @@ import numpy
 import rpy2.robjects as ro
 import theano
 import theano.tensor as T
-from theano import pp
+
 from theano.tensor.shared_randomstreams import RandomStreams
 
 from logistic_sgd import LogisticRegression, load_data
@@ -39,7 +39,7 @@ class SdA(object):
         assert self.n_layers > 0
 
         if not theano_rng:
-            theano_rng = RandomStreams(numpy_rng.randint(2 ** 17))
+            theano_rng = RandomStreams(numpy_rng.randint(2 ** 17)) #一个除了89757改变随机的地方
 
         self.x = T.matrix('x')
         self.y = T.ivector('y')
@@ -67,15 +67,15 @@ class SdA(object):
 
                 print "Reading in the weights and bias of %d Hidden Layer" %(i+1)
 
-                weights_filename=[hiddenLayer_weights_file,str(i+1),"_hiddenLayer_W.csv"]
-                bias_filename=[hiddenLayer_bias_file,str(i+1),"_hiddenLayer_b.csv"]
+                weights_filename="".join([str(i+1),"_hiddenLayer_W.csv"])
+                bias_filename="".join([str(i+1),"_hiddenLayer_b.csv"])
 
-                f=open("".join(weights_filename),"rb")
+                f=open(os.path.join(hiddenLayer_weights_file,weights_filename),"rb")
                 data=numpy.loadtxt(f,delimiter=',',dtype=float)
                 f.close()
                 shared_hiddenLayer_W = theano.shared(numpy.asarray(data,dtype=theano.config.floatX),borrow=True)
 
-                f=open("".join(bias_filename),"rb")
+                f=open(os.path.join(hiddenLayer_bias_file,bias_filename),"rb")
                 data=numpy.loadtxt(f,delimiter=',',dtype=float)
                 f.close()
                 shared_hiddenLayer_b = theano.shared(numpy.asarray(data,dtype=theano.config.floatX),borrow=True)
@@ -104,7 +104,7 @@ class SdA(object):
                           bhid=sigmoid_layer.b)
             self.dA_layers.append(dA_layer)
 
-        #最后加一层logistic
+        #最后加一层logistic，有提供权重的时候就要去读入
         if logLayer_weights_file is None:
 
             self.logLayer = LogisticRegression(
@@ -118,15 +118,15 @@ class SdA(object):
             print "Reading in the weights and bias of Logistic Layer \n"
 
             #把logistic layer的权重读入
-            weights_filename=[logLayer_weights_file,"logisticLayer_W.csv"]
-            bias_filename=[logLayer_bias_file,"logisticLayer_b.csv"]
+            weights_filename=os.path.join(logLayer_weights_file,"logisticLayer_W.csv")
+            bias_filename=os.path.join(logLayer_bias_file,"logisticLayer_b.csv")
 
-            f=open("".join(weights_filename),"rb")
+            f=open(weights_filename,"rb")
             data=numpy.loadtxt(f,delimiter=',',dtype=float)
             f.close()
             shared_logLayer_W = theano.shared(numpy.asarray(data,dtype=theano.config.floatX),borrow=True)
 
-            f=open("".join(bias_filename),"rb")
+            f=open(bias_filename,"rb")
             data=numpy.loadtxt(f,delimiter=',',dtype=float)
             f.close()
             shared_logLayer_b = theano.shared(numpy.asarray(data,dtype=theano.config.floatX),borrow=True)
@@ -278,8 +278,8 @@ class SdA(object):
 
         return(weights,bias)
 
-
     def sda_show_pretraining_labels(self, extendinput,i):
+        #这个函数用来计算所有隐层的输出
         #input: n*m hidden_w: m*hidden_units hidden_b:hidden_units*1
         if i==0:
             return T.nnet.sigmoid(T.dot(extendinput, self.sigmoid_layers[i].W) + self.sigmoid_layers[i].b)
@@ -299,7 +299,7 @@ class SdA(object):
         return (self.p_newy,T.max(self.p_newy_given_x,axis=1))
 
     def sda_show_all_labels(self,extendinput):
-
+        #返回概率矩阵
         self.p_newy_given_x = T.nnet.softmax(T.dot(self.sda_show_pretraining_labels(extendinput,self.n_layers-1)
                                                    , self.logLayer.W) + self.logLayer.b)
 
@@ -314,7 +314,7 @@ class SdA(object):
 
 
 
-def test_SdA(finetune_lr=0.01, pretraining_epochs=30,
+def train_SdA(finetune_lr=0.01, pretraining_epochs=30,
              pretrain_lr=0.01, training_epochs=1000,
              dataset=[], n_in=29,n_out=2,
              batch_size=100, hidden_layers=[],
@@ -359,7 +359,7 @@ def test_SdA(finetune_lr=0.01, pretraining_epochs=30,
                 ##########################################
 
                 c.append(pretraining_fns[i](index=batch_index,
-                         corruption=corruption_levels[i],
+                         corruption=corruption_levels[i],  #corruption_level[i]就是在具体调用train函数的时候才传进去的
                          lr=pretrain_lr))
                 #print pp(pretraining_fns[i])
             print 'Pre-training layer %i, epoch %d, cost ' % (i, epoch),
@@ -455,6 +455,8 @@ def test_SdA(finetune_lr=0.01, pretraining_epochs=30,
         if not os.path.exists(weights_file):
             os.makedirs(weights_file)
 
+        os.chdir(weights_file)
+
         weights,bias=sda.sda_show_weights()
 
         if len(weights)<>len(hidden_layers)+1:
@@ -463,15 +465,15 @@ def test_SdA(finetune_lr=0.01, pretraining_epochs=30,
 
 
         #记录logistic layer的权重
-        weights_filename=[weights_file,"logisticLayer_W.csv"]
-        bias_filename=[bias_file,"logisticLayer_b.csv"]
-        numpy.savetxt("".join(weights_filename),weights.pop(),delimiter=",")
-        numpy.savetxt("".join(bias_filename) ,bias.pop(),delimiter=",")
+        # weights_filename=[weights_file,"logisticLayer_W.csv"]
+        # bias_filename=[bias_file,"logisticLayer_b.csv"]
+        numpy.savetxt("logisticLayer_W.csv",weights.pop(),delimiter=",")
+        numpy.savetxt("logisticLayer_b.csv",bias.pop(),delimiter=",")
 
         #记录hidden layer的权重
         for i in xrange(len(weights)):
-            weights_filename=[weights_file,str(i+1),"_hiddenLayer_W.csv"]
-            bias_filename=[bias_file,str(i+1),"_hiddenLayer_b.csv"]
+            weights_filename=[str(i+1),"_hiddenLayer_W.csv"]
+            bias_filename=[str(i+1),"_hiddenLayer_b.csv"]
             numpy.savetxt("".join(weights_filename),weights[i],delimiter=",")
             numpy.savetxt("".join(bias_filename),bias[i],delimiter=",")
 
@@ -509,7 +511,7 @@ def test_SdA(finetune_lr=0.01, pretraining_epochs=30,
 
 
 
-def SdA_extend_as_you_want(newx=None,newy=None,
+def extend_SdA(newx=None,newy=None,
                            weights_file=None,bias_file=None,
                            n_in=None,n_out=None,hidden_layers=[100,100]):
 
@@ -651,7 +653,7 @@ def main(argv=sys.argv):
             #print dataset
             resultname=[filehead,str(i),"_result_on_valid.csv"]
 
-            test_SdA(finetune_lr=tuning_learning_rate, pretraining_epochs=training_epochs,
+            train_SdA(finetune_lr=tuning_learning_rate, pretraining_epochs=training_epochs,
                     pretrain_lr=training_learning_rate, training_epochs=tuning_epochs,
                     dataset=dataset,
                     n_in=no_input,n_out=no_output,
@@ -709,7 +711,7 @@ def main(argv=sys.argv):
 
             print "In Sub-Classifier:  %d" %i
 
-            SdA_extend_as_you_want(newx="../dpdata/multiple_extend_set.csv",
+            extend_SdA(newx="../dpdata/multiple_extend_set.csv",
                                 newy="".join([resulthead,str(i),"_extend.csv"]),
                                 weights_file="".join([filehead,str(i),'/']),
                                 bias_file="".join([filehead,str(i),'/']),
@@ -746,17 +748,19 @@ def main(argv=sys.argv):
         ####### calling R  preprocessing   ####
         #######################################
 
+        code_dir=os.getcwd()
 
-        dpdata_address=re.search('/\w*/',sys.argv[2]).group(0).replace('/','',2)
+        #dpdata_address=re.search('/\w*/',sys.argv[2]).group(0).replace('/','',2)
+        dpdata_address=os.path.split(os.path.dirname(sys.argv[2]))[-1]
 
         r=ro.r
 
-        wd="".join(['setwd(\'' ,os.getcwd().replace('code',dpdata_address),'\')'])
+        #wd="".join(['setwd(\'' ,os.getcwd().replace('code',dpdata_address),'\')'])
+        wd="".join(['setwd(\'',os.path.join(os.path.split(os.getcwd())[0],dpdata_address),'\')'])
 
-        r(wd)
+        r(wd) #这句会改变python的当前路径
 
-        r.source('../code/DeepLearning-PreProcessing.R')
-
+        r.source(os.path.join(code_dir,'DeepLearning-PreProcessing.R'))
 
         ro.globalenv['train_test_ratio']=float(sys.argv[3])
 
@@ -771,7 +775,9 @@ def main(argv=sys.argv):
         ########################################
         ##########
 
-        datasetname=["".join(["../",dpdata_address,"/DP_valid.csv"]),"".join(["../",dpdata_address,"/DP_valid.csv"]),"".join(["../",dpdata_address,"/DP_valid.csv"])]
+        #datasetname=["".join(["../",dpdata_address,"/DP_train.csv"]),"".join(["../",dpdata_address,"/DP_valid.csv"]),"".join(["../",dpdata_address,"/DP_valid.csv"])]
+        data_header=os.path.split(sys.argv[2])[0]
+        datasetname=[os.path.join(data_header,"DP_train.csv"),os.path.join(data_header,"DP_valid.csv"),os.path.join(data_header,"DP_valid.csv")]
 
         training_learning_rate=float(sys.argv[5])
 
@@ -787,15 +793,15 @@ def main(argv=sys.argv):
 
         noise_level=eval(sys.argv[11])
 
-        test_SdA(finetune_lr=tuning_learning_rate, pretraining_epochs=training_epochs,
+        train_SdA(finetune_lr=tuning_learning_rate, pretraining_epochs=training_epochs,
                 pretrain_lr=training_learning_rate, training_epochs=tuning_epochs,
                 dataset=datasetname,
                 n_in=no_input,n_out=no_output,
                 batch_size=batchsize, hidden_layers=hiddenlayers,
                 corruption_levels=noise_level,
                 #newx="".join([filehead,str(i),"_test.csv"]),newy="".join(resultname),
-                weights_file="".join(["../",dpdata_address,"/DP_classifier/"]),
-                bias_file="".join(["../",dpdata_address,"/DP_classifier/" ]))
+                weights_file=os.path.join(os.getcwd(),'DP_classifier'),
+                bias_file=os.path.join(os.getcwd(),'DP_classifier'))
 
     elif sys.argv[1]=='DeepLearning-Extend':
         #####################################
@@ -816,15 +822,29 @@ def main(argv=sys.argv):
         print ('\nCalling R to pre-processing the data\n')
 
 
-        dpdata_address=re.search('/\w*/',sys.argv[2]).group(0).replace('/','',2)
+        # dpdata_address=re.search('/\w*/',sys.argv[2]).group(0).replace('/','',2)
+        #
+        # r=ro.r
+        #
+        # wd="".join(['setwd(\'' ,os.getcwd().replace('code',dpdata_address),'\')'])
+        #
+        # r(wd)
+        #
+        # r.source('../code/DeepLearning-PreProcessing.R')
+
+        code_dir=os.getcwd()
+
+        #dpdata_address=re.search('/\w*/',sys.argv[2]).group(0).replace('/','',2)
+        dpdata_address=os.path.split(os.path.dirname(sys.argv[2]))[-1]
 
         r=ro.r
 
-        wd="".join(['setwd(\'' ,os.getcwd().replace('code',dpdata_address),'\')'])
+        #wd="".join(['setwd(\'' ,os.getcwd().replace('code',dpdata_address),'\')'])
+        wd="".join(['setwd(\'',os.path.join(os.path.split(os.getcwd())[0],dpdata_address),'\')'])
 
-        r(wd)
+        r(wd) #这句会改变python的当前路径
 
-        r.source('../code/DeepLearning-PreProcessing.R')
+        r.source(os.path.join(code_dir,'DeepLearning-PreProcessing.R'))
 
         #normalize the data using R
         inout=r('extend_preprocessing(training_data,extending_data, non_feature)')
@@ -832,12 +852,15 @@ def main(argv=sys.argv):
         no_input=int(inout[0])
         no_output=int(inout[1])
 
-        filehead="".join(["../",dpdata_address,"/DP_classifier/"])               # weights
+        #filehead="".join(["../",dpdata_address,"/DP_classifier/"])               # weights
+        filehead=os.path.join(os.getcwd(),'DP_classifier')
 
-        resulthead=["".join(["../",dpdata_address,"/DP_result.csv"]),"".join(["../",dpdata_address,"/DP_result_all.csv"])] #results name
+        data_header=os.path.split(sys.argv[2])[0]
+
+        resulthead=[os.path.join(data_header,"DP_result.csv"),os.path.join(data_header,"DP_result_all.csv")] #results name
 
 
-        SdA_extend_as_you_want(newx="".join(["../",dpdata_address,"/DP_extend.csv"]),
+        extend_SdA(newx=os.path.join(data_header,"DP_extend.csv"),
                             newy=resulthead,
                             weights_file=filehead,
                             bias_file=filehead,

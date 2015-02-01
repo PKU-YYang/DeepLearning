@@ -1,7 +1,7 @@
 
 zeroone_normalizaiton=function(x){
   x=scale(x,scale=F)
-  #y=whiten(features)$U
+  #x=whiten(x)$U #做白化之前一定要先减去均值，对于图像要白化
   y=(x-min(x))/(max(x)-min(x)) # 0-1 归一化做不做scale都没有关系
   
   return(y)
