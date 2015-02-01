@@ -575,172 +575,8 @@ def main(argv=sys.argv):
     #debug-extend:
     #sys.argv = [sys.argv[0], 'DeepLearning-Extend', 'm_train.csv', 'm_extend.csv', '11', '[100]*2']
 
-    if sys.argv[1]=="LCG-CC-Train":
 
-
-        #############################
-        ### pre-processing using R ##
-        #############################
-
-        print ('\nCalling R to pre-processing the data\n')
-
-        r=ro.r
-
-        wd="".join(['setwd(\'' ,os.getcwd().replace('code','dpdata'),'\')'])
-
-        r(wd)
-
-        r.source('../code/LCG-CC-PreProcessing.R')
-
-        ro.globalenv['pl_threshold']=float(sys.argv[13])
-
-        ro.globalenv['num_clusters']=int(sys.argv[12])
-
-        ro.globalenv['train_test_ratio']=float(sys.argv[3])
-
-        ro.globalenv['training_data']=sys.argv[2]
-
-        ro.globalenv['label_no']=int(sys.argv[4])
-
-        no_input=int(r('train_preprocessing(pl_threshold,num_clusters,train_test_ratio,training_data,label_no)')[0])
-
-        #preprocessing return the number of output
-
-
-        no_output=2
-
-        #############################
-        ### Training the model   ####
-        #############################
-
-        training_learning_rate=float(sys.argv[5])
-
-        tuning_learning_rate=float(sys.argv[6])
-
-        training_epochs=int(sys.argv[7])
-
-        tuning_epochs=int(sys.argv[8])
-
-        batchsize=int(sys.argv[9])
-
-        hiddenlayers=eval(sys.argv[10])
-
-        noise_level=eval(sys.argv[11])
-
-
-
-
-        workenv="../dpdata/classifier"    #存权重
-
-        filehead="../dpdata/multiple_dl_" #存结果
-
-        noofclu=[x+1 for x in range(int(sys.argv[12]))]
-
-        # noofclu=[6]
-
-        datasetname=["_train.csv","_valid.csv","_valid.csv"] #这里的3个文件是传统的算法理的，必须都有Label
-                                                        #train,valid是正常的，test没有Label,test_pl有label有Pl
-
-        for i in noofclu:
-
-            print "Building Sub-Classifier:  %d" %i
-            dataset=[]
-
-            for j in datasetname:
-                dataset_name=[filehead,str(i),j]
-                dataset.append("".join(dataset_name))
-
-            #print dataset
-            resultname=[filehead,str(i),"_result_on_valid.csv"]
-
-            train_SdA(finetune_lr=tuning_learning_rate, pretraining_epochs=training_epochs,
-                    pretrain_lr=training_learning_rate, training_epochs=tuning_epochs,
-                    dataset=dataset,
-                    n_in=no_input,n_out=no_output,
-                    batch_size=batchsize, hidden_layers=hiddenlayers,
-                    corruption_levels=noise_level,
-                    newx="".join([filehead,str(i),"_test.csv"]),newy="".join(resultname),
-                    weights_file="".join([workenv,'_',str(i),'/']),
-                    bias_file="".join([workenv,'_',str(i),'/']) )
-
-
-    elif sys.argv[1]=="LCG-CC-Extend":
-
-        #####################################
-        ### Extending the model on new data #
-        #####################################
-
-        #注意extend的时候要看清楚当前读入的weights是哪个pl定义下的,weights的clasifier文件名前面没有pl的名字
-
-
-        noofclu=[x+1 for x in range(int(sys.argv[6]))]
-
-        ro.globalenv['training_data']=sys.argv[2]
-
-        ro.globalenv['extending_data']=sys.argv[3]
-
-        ro.globalenv['non_feature']=int(sys.argv[4])
-
-
-        hiddenlayers=eval(sys.argv[5])
-
-
-        print ('\nCalling R to pre-processing the data\n')
-
-        r=ro.r
-
-        wd="".join(['setwd(\'' ,os.getcwd().replace('code','dpdata'),'\')'])
-
-        r(wd)
-
-        r.source('../code/LCG-CC-PreProcessing.R')
-
-        #normalize the data using R
-        no_input=int(r('extend_preprocessing(training_data,extending_data, non_feature)')[0])
-
-        no_output=2
-
-
-
-        filehead="../dpdata/classifier_"
-
-        resulthead='../dpdata/multiple_dl_'
-
-
-        for i in noofclu:
-
-            print "In Sub-Classifier:  %d" %i
-
-            extend_SdA(newx="../dpdata/multiple_extend_set.csv",
-                                newy="".join([resulthead,str(i),"_extend.csv"]),
-                                weights_file="".join([filehead,str(i),'/']),
-                                bias_file="".join([filehead,str(i),'/']),
-                                n_in=no_input,n_out=no_output,hidden_layers=hiddenlayers)
-
-
-        #########################################
-        ### post-precessing the results using R #
-        #########################################
-
-        r('rm(list=ls())')
-
-        r(wd)
-
-        ro.globalenv['extending_data']=sys.argv[3]
-
-        ro.globalenv['non_feature']=int(sys.argv[4])
-
-        ro.globalenv['num_clusters']=float(sys.argv[6])
-
-        r.source('../code/LCG-CC-PostProcessing.R')
-
-        r('postprocessing(num_clusters,extending_data,non_feature)')
-
-
-
-
-
-    elif sys.argv[1]=="DeepLearning-Train":
+    if sys.argv[1]=="DeepLearning-Train":
 
         # this is separate use of deep learning
 
@@ -750,13 +586,11 @@ def main(argv=sys.argv):
 
         code_dir=os.getcwd()
 
-        #dpdata_address=re.search('/\w*/',sys.argv[2]).group(0).replace('/','',2)
         dpdata_address=os.path.split(os.path.dirname(sys.argv[2]))[-1]
 
         r=ro.r
 
-        #wd="".join(['setwd(\'' ,os.getcwd().replace('code',dpdata_address),'\')'])
-        wd="".join(['setwd(\'',os.path.join(os.path.split(os.getcwd())[0],dpdata_address),'\')'])
+        wd="".join(['setwd(\'',os.path.join(os.path.split(os.getcwd())[0],dpdata_address),'\')']).replace("\\","/")
 
         r(wd) #这句会改变python的当前路径
 
@@ -775,7 +609,6 @@ def main(argv=sys.argv):
         ########################################
         ##########
 
-        #datasetname=["".join(["../",dpdata_address,"/DP_train.csv"]),"".join(["../",dpdata_address,"/DP_valid.csv"]),"".join(["../",dpdata_address,"/DP_valid.csv"])]
         data_header=os.path.split(sys.argv[2])[0]
         datasetname=[os.path.join(data_header,"DP_train.csv"),os.path.join(data_header,"DP_valid.csv"),os.path.join(data_header,"DP_valid.csv")]
 
@@ -822,25 +655,13 @@ def main(argv=sys.argv):
         print ('\nCalling R to pre-processing the data\n')
 
 
-        # dpdata_address=re.search('/\w*/',sys.argv[2]).group(0).replace('/','',2)
-        #
-        # r=ro.r
-        #
-        # wd="".join(['setwd(\'' ,os.getcwd().replace('code',dpdata_address),'\')'])
-        #
-        # r(wd)
-        #
-        # r.source('../code/DeepLearning-PreProcessing.R')
-
         code_dir=os.getcwd()
 
-        #dpdata_address=re.search('/\w*/',sys.argv[2]).group(0).replace('/','',2)
         dpdata_address=os.path.split(os.path.dirname(sys.argv[2]))[-1]
 
         r=ro.r
 
-        #wd="".join(['setwd(\'' ,os.getcwd().replace('code',dpdata_address),'\')'])
-        wd="".join(['setwd(\'',os.path.join(os.path.split(os.getcwd())[0],dpdata_address),'\')'])
+        wd="".join(['setwd(\'',os.path.join(os.path.split(os.getcwd())[0],dpdata_address),'\')']).replace("\\","/")
 
         r(wd) #这句会改变python的当前路径
 
@@ -852,7 +673,6 @@ def main(argv=sys.argv):
         no_input=int(inout[0])
         no_output=int(inout[1])
 
-        #filehead="".join(["../",dpdata_address,"/DP_classifier/"])               # weights
         filehead=os.path.join(os.getcwd(),'DP_classifier')
 
         data_header=os.path.split(sys.argv[2])[0]
@@ -889,7 +709,7 @@ def main(argv=sys.argv):
 
     else:
 
-        raise ValueError("Please Input \'LCG-CC-Train\' or \'LCG-CC-Extend\' \n \'DeepLearning-Extend\' or \'DeepLearning-Train\' ")
+        raise ValueError("Please Input \'DeepLearning-Extend\' or \'DeepLearning-Train\' ")
 
 
 
@@ -901,9 +721,6 @@ if __name__ == '__main__':
 
     main()
 
-   #python SdA.py LCG-CC-Extend lcg_train.csv lcg_extend.csv 19 [100]*2 5
-
-   #python SdA.py LCG-CC-Train lcg_train.csv 0.8 19 0.1 0.1 2 2 1 [100]*2 [0.3]*2 5 1100
 
    #python SdA.py DeepLearning-Train ../dpdata/m_train.csv 0.9 11 0.1 0.1 2 2 1 [100]*2 [0.1]*2
 

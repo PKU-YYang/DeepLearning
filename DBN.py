@@ -595,7 +595,7 @@ def main(argv=sys.argv):
 
         r=ro.r
 
-        wd="".join(['setwd(\'',os.path.join(os.path.split(os.getcwd())[0],dpdata_address),'\')'])
+        wd="".join(['setwd(\'',os.path.join(os.path.split(os.getcwd())[0],dpdata_address),'\')']).replace("\\","/") #这个是windows特有的双\\地址
 
         r(wd) #这句会改变python的当前路径
 
@@ -630,7 +630,7 @@ def main(argv=sys.argv):
 
         hiddenlayers=eval(sys.argv[10])
 
-        cdk=eval(sys.argv[11])
+        cdk=int(sys.argv[11])
 
         train_DBN(finetune_lr=tuning_learning_rate, pretraining_epochs=training_epochs,
                     pretrain_lr=training_learning_rate, training_epochs=tuning_epochs,
@@ -667,7 +667,7 @@ def main(argv=sys.argv):
 
         r=ro.r
 
-        wd="".join(['setwd(\'',os.path.join(os.path.split(os.getcwd())[0],dpdata_address),'\')'])
+        wd="".join(['setwd(\'',os.path.join(os.path.split(os.getcwd())[0],dpdata_address),'\')']).replace("\\","/")
 
         r(wd) #这句会改变python的当前路径
 
