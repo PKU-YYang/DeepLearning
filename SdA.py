@@ -150,12 +150,12 @@ class SdA(object):
         self.errors = self.logLayer.errors(self.y)
 
     def pretraining_functions(self, train_set_x, batch_size):
-
+        #构建train函数的外壳
         index = T.lscalar('index')
         corruption_level = T.scalar('corruption')
         learning_rate = T.scalar('lr')
-        batch_begin = index * batch_size
 
+        batch_begin = index * batch_size
         batch_end = batch_begin + batch_size
 
         pretrain_fns = []
@@ -175,7 +175,7 @@ class SdA(object):
                 outputs=cost,
                 updates=updates,
                 givens={
-                    self.x: train_set_x[batch_begin: batch_end]
+                    self.x: train_set_x[batch_begin: batch_end] #存入cpu
                 }
             )
             #print pp(fn)
@@ -246,13 +246,13 @@ class SdA(object):
             name='valid'
         )
 
-        def valid_score():
+        def valid_score(): #调用valid_score函数可以返回所有Batch上的self.errors
             return [valid_score_i(i) for i in xrange(n_valid_batches)]
 
         def test_score():
             return [test_score_i(i) for i in xrange(n_test_batches)]
 
-        return train_fn, valid_score, test_score
+        return train_fn, valid_score, test_score #train_fn是最外层训练函数的壳子
 
     def sda_show_weights(self):
 
@@ -260,35 +260,29 @@ class SdA(object):
 
         bias=[]
 
-        # the weights of hidden layer
-        # use the dictionary to save
         for i in xrange(self.n_layers):
 
-            #weights["Hidden"+str(i+1)]=self.sigmoid_layers[i].W.get_value()
-            #bias["Hidden"+str(i+1)]=self.sigmoid_layers[i].b.get_value()
             weights.append(self.sigmoid_layers[i].W.get_value())
             bias.append(self.sigmoid_layers[i].b.get_value())
 
-
-
-        #weights["Final"]=self.logLayer.W.get_value()
-        #bias["Final"]=self.logLayer.b.get_value()
+        #隐层的取完把最后一层加入
         weights.append(self.logLayer.W.get_value())
         bias.append(self.logLayer.b.get_value())
 
         return(weights,bias)
 
     def sda_show_pretraining_labels(self, extendinput,i):
-        #这个函数用来计算所有隐层的输出
+        #这个函数用来计算所有隐层的输出，这是一个中间函数
         #input: n*m hidden_w: m*hidden_units hidden_b:hidden_units*1
         if i==0:
             return T.nnet.sigmoid(T.dot(extendinput, self.sigmoid_layers[i].W) + self.sigmoid_layers[i].b)
         else:
             return T.nnet.sigmoid(T.dot(self.sda_show_pretraining_labels(extendinput,i-1),
                                         self.sigmoid_layers[i].W) + self.sigmoid_layers[i].b)
+                                        #这里的layer如果有新的读入会用新的读入
 
     def sda_show_labels(self,extendinput):
-
+        #计算sigmoid的输出
         self.p_newy_given_x = T.nnet.softmax(T.dot(self.sda_show_pretraining_labels(extendinput,self.n_layers-1)
                                                    , self.logLayer.W) + self.logLayer.b)
 
@@ -304,14 +298,6 @@ class SdA(object):
                                                    , self.logLayer.W) + self.logLayer.b)
 
         return (self.p_newy_given_x)
-
-
-
-
-
-
-
-
 
 
 def train_SdA(finetune_lr=0.01, pretraining_epochs=30,
@@ -373,7 +359,7 @@ def train_SdA(finetune_lr=0.01, pretraining_epochs=30,
 
     print '... getting the finetuning functions'
     train_fn, validate_model, test_model = sda.build_finetune_functions(
-        datasets=datasets,
+        datasets=datasets, #valid和test dataset其实是在这里传入的
         batch_size=batch_size,
         learning_rate=finetune_lr
     )
@@ -401,11 +387,11 @@ def train_SdA(finetune_lr=0.01, pretraining_epochs=30,
             #                fine-tune the model      #
             ###########################################
 
-            minibatch_avg_cost = train_fn(minibatch_index)
+            minibatch_avg_cost = train_fn(minibatch_index) #最后train最顶层
             iter = (epoch - 1) * n_train_batches + minibatch_index
 
             if (iter + 1) % validation_frequency == 0:
-                validation_losses = validate_model()
+                validation_losses = validate_model() #这里返回的是每个batch上的cost
                 this_validation_loss = numpy.mean(validation_losses)
                 print('epoch %i, minibatch %i/%i, validation error %f %%' %
                       (epoch, minibatch_index + 1, n_train_batches,
@@ -457,16 +443,14 @@ def train_SdA(finetune_lr=0.01, pretraining_epochs=30,
 
         os.chdir(weights_file)
 
-        weights,bias=sda.sda_show_weights()
+        weights,bias=sda.sda_show_weights() #想返回theano内部的什么东西，在类里面添加那个方法，然后再函数外面调用那个函数
 
         if len(weights)<>len(hidden_layers)+1:
 
             raise ValueError("The number of hidden layers is wrong!")
 
 
-        #记录logistic layer的权重
-        # weights_filename=[weights_file,"logisticLayer_W.csv"]
-        # bias_filename=[bias_file,"logisticLayer_b.csv"]
+        #记录logistic layer的权重,存在最后的是logistic
         numpy.savetxt("logisticLayer_W.csv",weights.pop(),delimiter=",")
         numpy.savetxt("logisticLayer_b.csv",bias.pop(),delimiter=",")
 
@@ -551,7 +535,7 @@ def extend_SdA(newx=None,newy=None,
     extend_model_all_results = theano.function(
     inputs=[],
     outputs=sda.sda_show_all_labels(newinput)
-     #如果想要返回一个用theano计算的函数，那么一定要额外在主函数里建一个专门返回子函数的函数
+     #如果想要返回一个用theano计算的函数，那么一定要额外在主函数里建一个专门返回子函数的函数，就比如现在
     )
 
 
@@ -564,6 +548,9 @@ def extend_SdA(newx=None,newy=None,
     numpy.savetxt(newy[1],numpy.asarray(prob_matrix),delimiter=',')
     print "New label has been generated!"
 
+    #weights,bias=sda.sda_show_weights()
+
+    #print weights[1],bias[1]
 
 
 
@@ -610,7 +597,8 @@ def main(argv=sys.argv):
         ##########
 
         data_header=os.path.split(sys.argv[2])[0]
-        datasetname=[os.path.join(data_header,"DP_train.csv"),os.path.join(data_header,"DP_valid.csv"),os.path.join(data_header,"DP_valid.csv")]
+        datasetname=[os.path.join(data_header,"DP_train.csv"),os.path.join(data_header,"DP_valid.csv"),
+                     os.path.join(data_header,"DP_valid.csv")]
 
         training_learning_rate=float(sys.argv[5])
 
@@ -677,7 +665,8 @@ def main(argv=sys.argv):
 
         data_header=os.path.split(sys.argv[2])[0]
 
-        resulthead=[os.path.join(data_header,"DP_result.csv"),os.path.join(data_header,"DP_result_all.csv")] #results name
+        resulthead=[os.path.join(data_header,"DP_result.csv"),os.path.join(data_header,"DP_result_all.csv")]
+        #results name，一个存label,一个存概率矩阵
 
 
         extend_SdA(newx=os.path.join(data_header,"DP_extend.csv"),

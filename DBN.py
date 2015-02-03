@@ -526,6 +526,7 @@ def train_DBN(finetune_lr=0.1, pretraining_epochs=100,
 
         print "Weights and bias have been saved! \n"
 
+
 def extend_DBN(newx=None,newy=None,
                weights_file=None,bias_file=None,
                n_in=None,n_out=None,hidden_layers=[100,100]):
@@ -580,7 +581,6 @@ def extend_DBN(newx=None,newy=None,
 
 
 
-
 def main(argv=sys.argv):
 
     if sys.argv[1]=="DeepLearning-Train":
@@ -595,7 +595,8 @@ def main(argv=sys.argv):
 
         r=ro.r
 
-        wd="".join(['setwd(\'',os.path.join(os.path.split(os.getcwd())[0],dpdata_address),'\')']).replace("\\","/") #这个是windows特有的双\\地址
+        wd="".join(['setwd(\'',os.path.join(os.path.split(os.getcwd())[0],dpdata_address),'\')']).replace("\\","/")
+        #这个是windows特有的双\\地址
 
         r(wd) #这句会改变python的当前路径
 
@@ -616,7 +617,8 @@ def main(argv=sys.argv):
         #########################################
 
         data_header=os.path.split(sys.argv[2])[0]
-        datasetname=[os.path.join(data_header,"DP_train.csv"),os.path.join(data_header,"DP_valid.csv"),os.path.join(data_header,"DP_valid.csv")]
+        datasetname=[os.path.join(data_header,"DP_train.csv"),os.path.join(data_header,"DP_valid.csv"),
+                     os.path.join(data_header,"DP_valid.csv")]
 
         training_learning_rate=float(sys.argv[5])
 
