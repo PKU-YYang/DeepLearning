@@ -119,8 +119,8 @@ class dA(object):
         cost = T.mean(L)
 
 
-        gparams = T.grad(cost, self.params)
-
+        gparams = T.grad(cost, self.params) #pretrain的时候是基于信息熵的，没有用到label，尽量保证输出和输入要一样
+                                            #是一种un-supervised的方法，和rbm一样
         updates = [
             (param, param - learning_rate * gparam)
             for param, gparam in zip(self.params, gparams)

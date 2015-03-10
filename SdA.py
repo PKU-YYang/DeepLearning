@@ -305,7 +305,10 @@ def train_SdA(finetune_lr=0.01, pretraining_epochs=30,
              dataset=[], n_in=29,n_out=2,
              batch_size=100, hidden_layers=[],
              corruption_levels=[],
-             newx=None,newy=None,weights_file=None,bias_file=None):
+             newx=None,newy=None,
+             weights_file=None,bias_file=None,  #where to save the new weights
+             weights_initial=None,bias_initial=None
+             ):
 
     datasets = load_data(dataset[0],dataset[1],dataset[2])
 
@@ -324,7 +327,9 @@ def train_SdA(finetune_lr=0.01, pretraining_epochs=30,
         numpy_rng=numpy_rng,
         n_ins=n_in,
         hidden_layers_sizes=hidden_layers,
-        n_outs=n_out
+        n_outs=n_out,
+        logLayer_weights_file=weights_initial,logLayer_bias_file=bias_initial,
+        hiddenLayer_weights_file=weights_initial,hiddenLayer_bias_file=bias_initial
     )
     print '... getting the pretraining functions'
     pretraining_fns = sda.pretraining_functions(train_set_x=train_set_x,
@@ -593,6 +598,14 @@ def main(argv=sys.argv):
 
         no_input=int(inout[0])
         no_output=int(inout[1])
+
+        #如果要自己定义一组特殊的start point就存放在这个folder里,hard negatvei mining就有这样的需求
+        if sys.argv[12]=='random':
+            new_initial_folder=None
+        else:
+            new_initial_folder=os.path.join(os.getcwd(),sys.argv[12])
+
+
         ########################################
         ##########
 
@@ -620,9 +633,10 @@ def main(argv=sys.argv):
                 n_in=no_input,n_out=no_output,
                 batch_size=batchsize, hidden_layers=hiddenlayers,
                 corruption_levels=noise_level,
-                #newx="".join([filehead,str(i),"_test.csv"]),newy="".join(resultname),
-                weights_file=os.path.join(os.getcwd(),'DP_classifier'),
-                bias_file=os.path.join(os.getcwd(),'DP_classifier'))
+                weights_file=os.path.join(os.getcwd(),sys.argv[13]), #where to save the weights
+                bias_file=os.path.join(os.getcwd(),sys.argv[13]),   #如果有指定的初始权值，那么就要换成新的名字
+                weights_initial=new_initial_folder,bias_initial=new_initial_folder)  #如果有特定的初始权值，就从这里读入
+                
 
     elif sys.argv[1]=='DeepLearning-Extend':
         #####################################
@@ -661,7 +675,8 @@ def main(argv=sys.argv):
         no_input=int(inout[0])
         no_output=int(inout[1])
 
-        filehead=os.path.join(os.getcwd(),'DP_classifier')
+        filehead=os.path.join(os.getcwd(),sys.argv[6])
+
 
         data_header=os.path.split(sys.argv[2])[0]
 
@@ -711,6 +726,10 @@ if __name__ == '__main__':
     main()
 
 
-   #python SdA.py DeepLearning-Train ../dpdata/m_train.csv 0.9 11 0.1 0.1 2 2 1 [100]*2 [0.1]*2
+   #python SdA.py DeepLearning-Train ../dpdata/m_train.csv 0.9 11 0.1 0.1 2 2 1 [100]*2 [0.1]*2 random 1_weights
 
-   #python SdA.py DeepLearning-Extend ../dpdata/m_train.csv m_extend.csv 11 [100]*2
+   #python SdA.py DeepLearning-Train ../dpdata/m_train.csv 0.9 11 0.1 0.1 2 2 1 [100]*2 [0.1]*2 1_weights 2_weights
+
+   #python SdA.py DeepLearning-Extend ../dpdata/m_train.csv m_extend.csv 11 [100]*2 1_weights
+
+   #python SdA.py DeepLearning-Extend ../dpdata/m_train.csv m_extend.csv 11 [100]*2 2_weights
