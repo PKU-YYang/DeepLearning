@@ -636,7 +636,7 @@ def main(argv=sys.argv):
                 weights_file=os.path.join(os.getcwd(),sys.argv[13]), #where to save the weights
                 bias_file=os.path.join(os.getcwd(),sys.argv[13]),   #如果有指定的初始权值，那么就要换成新的名字
                 weights_initial=new_initial_folder,bias_initial=new_initial_folder)  #如果有特定的初始权值，就从这里读入
-                
+
 
     elif sys.argv[1]=='DeepLearning-Extend':
         #####################################

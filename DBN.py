@@ -347,7 +347,8 @@ def train_DBN(finetune_lr=0.1, pretraining_epochs=100,
              dataset=[],n_in=29,n_out=2,
              batch_size=10,hidden_layers=[],
              cdk=1,
-             weights_file=None,bias_file=None):
+             weights_file=None,bias_file=None,
+             weights_initial=None,bias_initial=None):
 
     datasets = load_data(dataset[0],dataset[1],dataset[2]) #一次读入三个dataset
 
@@ -364,7 +365,9 @@ def train_DBN(finetune_lr=0.1, pretraining_epochs=100,
     # construct the Deep Belief Network
     dbn = DBN(numpy_rng=numpy_rng, n_ins=n_in,
               hidden_layers_sizes=hidden_layers,
-              n_outs=n_out)
+              n_outs=n_out,
+              logLayer_weights_file=weights_initial,logLayer_bias_file=bias_initial,
+              hiddenLayer_weights_file=weights_initial,hiddenLayer_bias_file=bias_initial)
 
 
     #########################
@@ -616,6 +619,12 @@ def main(argv=sys.argv):
 
         #########################################
 
+        if sys.argv[12]=='random':
+            new_initial_folder=None
+        else:
+            new_initial_folder=os.path.join(os.getcwd(),sys.argv[12])
+
+
         data_header=os.path.split(sys.argv[2])[0]
         datasetname=[os.path.join(data_header,"DP_train.csv"),os.path.join(data_header,"DP_valid.csv"),
                      os.path.join(data_header,"DP_valid.csv")]
@@ -640,8 +649,8 @@ def main(argv=sys.argv):
                     n_in=no_input,n_out=no_output,
                     batch_size=batchsize, hidden_layers=hiddenlayers,
                     cdk=cdk,
-                    weights_file=os.path.join(os.getcwd(),'DP_classifier'),
-                    bias_file=os.path.join(os.getcwd(),'DP_classifier'))
+                    weights_file=os.path.join(os.getcwd(),sys.argv[13]),
+                    bias_file=os.path.join(os.getcwd(),sys.argv[13]))
 
 
     elif sys.argv[1]=="DeepLearning-Extend":
@@ -681,7 +690,7 @@ def main(argv=sys.argv):
         no_input=int(inout[0])
         no_output=int(inout[1])
 
-        filehead=os.path.join(os.getcwd(),'DP_classifier')
+        filehead=os.path.join(os.getcwd(),sys.argv[6])
 
         data_header=os.path.split(sys.argv[2])[0]
         resulthead=[os.path.join(data_header,"DP_result.csv"),os.path.join(data_header,"DP_result_all.csv")] #results name
@@ -698,6 +707,11 @@ if __name__ == '__main__':
 
     main()
 
-    #python DBN.py DeepLearning-Train ../dpdata/m_train.csv 0.9 11 0.1 0.1 2 2 1 [100]*2 2
 
-    #python DBN.py DeepLearning-Extend ../dpdata/m_train.csv m_extend.csv 11 [100]*2
+   #python DBN.py DeepLearning-Train ../dpdata/m_train.csv 0.9 11 0.1 0.1 2 2 1 [100]*2 1 random 1_weights
+
+   #python DBN.py DeepLearning-Train ../dpdata/m_train.csv 0.9 11 0.1 0.1 2 2 1 [100]*2 1 1_weights 2_weights
+
+   #python DBN.py DeepLearning-Extend ../dpdata/m_train.csv m_extend.csv 11 [100]*2 1_weights
+
+   #python DBN.py DeepLearning-Extend ../dpdata/m_train.csv m_extend.csv 11 [100]*2 2_weights
