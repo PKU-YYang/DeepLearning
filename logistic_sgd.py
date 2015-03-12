@@ -24,7 +24,7 @@ class LogisticRegression(object): #As for the logistic regression we will
         if W is None:
             self.W = theano.shared(
                 value=numpy.zeros(
-                    (n_in, n_out),
+                    (n_in, n_out), #其实w的每一列就是一个分类器，softmax就是归一化一个输入在每个类的分类器上的得分
                     dtype=theano.config.floatX
                 ),
                 name='W',
@@ -68,7 +68,6 @@ class LogisticRegression(object): #As for the logistic regression we will
             return T.mean(T.neq(self.y_pred, y))
         else:
             raise NotImplementedError()
-
 
     def show_labels(self,extendinput):
 

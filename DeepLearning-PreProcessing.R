@@ -1,4 +1,12 @@
 
+#这个预处理函数做两个事情：
+#1 找到categorical variable，把他们转化成dummy variable
+#2 进行去均值，然后【0，1】的归一化
+
+#要求：种类小于10的被认为是categorical
+#      trainging 和 extend dataset的出现categorical的列号应该一样
+
+
 zeroone_normalizaiton=function(x){
   x=scale(x,scale=F)
   #x=whiten(x)$U #做白化之前一定要先减去均值，对于图像要白化
@@ -24,21 +32,17 @@ extend_preprocessing=function(training_data,extending_data,non_feature){
   ncol=dim(extend_clients)[2]
   n_col_extend=dim(extend_clients)[2]
   
+  #寻找dummy variable,不同种类的取值小于10的
   dummy=c()
-  
   for (i in 1:n_col_extend){
-    
-    if (length(unique(extend_clients[,i]))<10){
-      
+    if (length(unique(extend_clients[,i]))<10){ 
       dummy=c(dummy,i)
     }
-    
   } 
   
   
-  
+  #要求training data和extending data出现categorical variable的位置一样
   for (i in dummy){
-    
     for (j in unique(clients[,i])){ #如果clients和extend_clients的segment 
       #marketcluster不一样，这里的i要改
       #cat(colnames(clients)[i],j,'\n')
