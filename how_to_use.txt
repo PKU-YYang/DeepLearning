@@ -17,11 +17,11 @@ python SdA.py LCG-CC-Extend lcg_train.csv lcg_extend.csv 19 [150]*2 5
 [2] Deep Learning Algo:
 
 Train:
-python [0] [1] [2] [3] [4] [5] [6] [7] [8] [9] [10] [11] [16]
+python [0] [1] [2] [3] [4] [5] [6] [7] [8] [9] [10] [11] [16] [17]
 python SdA.py DeepLearning-Train m_train.csv 0.9 11 0.1 0.1 2 2 1 [100]*2 [0.1]*2
 
 Extend:
-python [0] [1] [2] [14] [15] [10]
+python [0] [1] [2] [14] [15] [10] [17]
 python SdA.py DeepLearning-Extend m_train.csv m_extend.csv 11 [100]*2
 
 
