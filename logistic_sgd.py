@@ -54,7 +54,7 @@ class LogisticRegression(object): #As for the logistic regression we will
 
     def negative_log_likelihood(self, y):
 
-        return -T.mean(T.log(self.p_y_given_x)[T.arange(y.shape[0]), y])
+        return -T.mean(T.log(self.p_y_given_x)[T.arange(y.shape[0]), y]) #把0,1,2,3..100中应该是的那个label的概率取出来
 
     def errors(self, y):
 
@@ -86,20 +86,20 @@ class LogisticRegression(object): #As for the logistic regression we will
 def load_data(trainset,validset,testset):
 
     #分别读入三个文件并share他们
-    f=open(validset,"rb")
-    data=numpy.loadtxt(f,delimiter=',',dtype=float,skiprows=1)
-    f.close()
+
+    # f=open(validset,"rb")
+    # data=numpy.loadtxt(f,delimiter=',',dtype=float,skiprows=1)
+    # f.close()
+    # valid_set=(data[:,:-1],data[:,-1])
+
+    data=numpy.loadtxt(trainset, delimiter=',', dtype=float, skiprows=1)
+    train_set=(data[:,:-1],data[:,-1])
+
+    data=numpy.loadtxt(validset, delimiter=',', dtype=float, skiprows=1)
     valid_set=(data[:,:-1],data[:,-1])
 
-    f=open(testset,"rb")
-    data=numpy.loadtxt(f,delimiter=',',dtype=float,skiprows=1)
-    f.close()
+    data=numpy.loadtxt(testset, delimiter=',', dtype=float, skiprows=1)
     test_set=(data[:,:-1],data[:,-1])
-
-    f=open(trainset,"rb")
-    data=numpy.loadtxt(f,delimiter=',',dtype=float,skiprows=1)
-    f.close()
-    train_set=(data[:,:-1],data[:,-1])
 
     def shared_dataset(data_xy, borrow=True):
 
