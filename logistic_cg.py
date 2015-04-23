@@ -1,3 +1,4 @@
+#-*- encoding:utf-8 -*-
 """
 This tutorial introduces logistic regression using Theano and conjugate
 gradient descent.
@@ -33,6 +34,7 @@ References:
 
 
 """
+
 __docformat__ = 'restructedtext en'
 
 
@@ -187,21 +189,20 @@ def cg_optimization_mnist(n_epochs=50, mnist_pkl_gz='mnist.pkl.gz'):
     # the model in symbolic format
     cost = classifier.negative_log_likelihood(y).mean()
 
-    # compile a theano function that computes the mistakes that are made by
-    # the model on a minibatch
+    #根据一个Minibatch号码在test数据上计算error
     test_model = theano.function(
         [minibatch_offset],
-        classifier.errors(y),
+        classifier.errors(y), #计算test set上的错误率
         givens={
             x: test_set_x[minibatch_offset:minibatch_offset + batch_size],
             y: test_set_y[minibatch_offset:minibatch_offset + batch_size]
         },
         name="test"
     )
-
+    #根据一个Minibatch号码在valida数据上计算error
     validate_model = theano.function(
         [minibatch_offset],
-        classifier.errors(y),
+        classifier.errors(y), #计算validate set上的错误率
         givens={
             x: valid_set_x[minibatch_offset: minibatch_offset + batch_size],
             y: valid_set_y[minibatch_offset: minibatch_offset + batch_size]
@@ -209,10 +210,10 @@ def cg_optimization_mnist(n_epochs=50, mnist_pkl_gz='mnist.pkl.gz'):
         name="validate"
     )
 
-    #  compile a theano function that returns the cost of a minibatch
+    # 封装一个根据特定minibatch号码计算likelihood cost的函数
     batch_cost = theano.function(
         [minibatch_offset],
-        cost,
+        cost, #计算一个起始点开始接下来batch_size个函数的log-liklihood
         givens={
             x: train_set_x[minibatch_offset: minibatch_offset + batch_size],
             y: train_set_y[minibatch_offset: minibatch_offset + batch_size]
@@ -220,11 +221,10 @@ def cg_optimization_mnist(n_epochs=50, mnist_pkl_gz='mnist.pkl.gz'):
         name="batch_cost"
     )
 
-    # compile a theano function that returns the gradient of the minibatch
-    # with respect to theta
+    # 封装一个根据特定minibatch号码计算gradient的函数
     batch_grad = theano.function(
         [minibatch_offset],
-        T.grad(cost, classifier.theta),
+        T.grad(cost, classifier.theta), #让所有预测对的那个概率加起来尽量的高
         givens={
             x: train_set_x[minibatch_offset: minibatch_offset + batch_size],
             y: train_set_y[minibatch_offset: minibatch_offset + batch_size]
@@ -232,29 +232,28 @@ def cg_optimization_mnist(n_epochs=50, mnist_pkl_gz='mnist.pkl.gz'):
         name="batch_grad"
     )
 
-    # creates a function that computes the average cost on the training set
+    # 计算train数据上的cost函数
     def train_fn(theta_value):
         classifier.theta.set_value(theta_value, borrow=True)
         train_losses = [batch_cost(i * batch_size)
-                        for i in xrange(n_train_batches)]
+                        for i in xrange(n_train_batches)] #在所有的batch上计算cost，然后输出均值
         return numpy.mean(train_losses)
 
-    # creates a function that computes the average gradient of cost with
-    # respect to theta
+    # 用预测对的所有likelihood为cost，计算gradient
     def train_fn_grad(theta_value):
         classifier.theta.set_value(theta_value, borrow=True)
         grad = batch_grad(0)
-        for i in xrange(1, n_train_batches):
+        for i in xrange(1, n_train_batches): #在batch上累加gradient然后除以batch的个数
             grad += batch_grad(i * batch_size)
         return grad / n_train_batches
 
-    validation_scores = [numpy.inf, 0]
+    validation_scores = [numpy.inf, 0] #用来记录最小的在validation和test上的loss
 
-    # creates the validation function
+    # 计算在validation数据上的错误率，如果创了记录，那么就在test数据上测试
     def callback(theta_value):
         classifier.theta.set_value(theta_value, borrow=True)
-        #compute the validation loss
-        validation_losses = [validate_model(i * batch_size)
+        #compute the validation error
+        validation_losses = [validate_model(i * batch_size) #计算每个batch上的错误率
                              for i in xrange(n_valid_batches)]
         this_validation_loss = numpy.mean(validation_losses)
         print('validation error %f %%' % (this_validation_loss * 100.,))
@@ -264,7 +263,7 @@ def cg_optimization_mnist(n_epochs=50, mnist_pkl_gz='mnist.pkl.gz'):
             # if so, replace the old one, and compute the score on the
             # testing dataset
             validation_scores[0] = this_validation_loss
-            test_losses = [test_model(i * batch_size)
+            test_losses = [test_model(i * batch_size) #如果效果好就在test set上计算错误率
                            for i in xrange(n_test_batches)]
             validation_scores[1] = numpy.mean(test_losses)
 
